@@ -2,8 +2,7 @@
 
 ## Current task
 
-- Complete Milestone 1 remediation: secure authentication, permission
-  boundaries, and live web/API integrations.
+- Build Milestone 2: tasks, conversation, and activity.
 
 ## Active remediation
 
@@ -12,6 +11,9 @@
 - [x] Encrypt integration tokens at rest.
 - [x] Enforce owner-only removal and sanitized teammate profiles.
 - [x] Connect CSV import and dashboard UI to scoped API data.
+- [x] Update [MILESTONE_1_REVIEW.md](MILESTONE_1_REVIEW.md) with remediation
+  evidence and remaining gaps.
+- [ ] Fix dashboard company lookup and run the live PostgreSQL isolation test.
 
 ## Milestones and tasks
 
@@ -77,16 +79,30 @@
 
 ### Milestone 2 — Tasks, conversation, and activity
 
-- [ ] Implement task creation, assignment, priorities, and due dates.
-- [ ] Implement task status transitions and blocked-reason validation.
-- [ ] Build My Tasks, Team Tasks, and All Tasks views.
-- [ ] Add task filters and overdue indicators.
-- [ ] Implement the task conversation thread.
-- [ ] Add comments, status events, and system events.
+- [x] Implement task creation, assignment, priorities, and due dates.
+- [x] Implement task status transitions and blocked-reason validation.
+- [x] Build the initial task list and task detail views.
+- [x] Add status/priority filters and overdue indicators to the API/list.
+- [x] Implement the task conversation thread.
+- [x] Add comments, status events, and append-only activity rows.
 - [ ] Add mentions and uploaded attachments.
 - [ ] Add Google Drive link attachment contracts.
-- [ ] Implement append-only activity logging and task history.
 - [ ] Verify M4, M5, and M9 acceptance criteria.
+
+### Milestone 2 implementation checkpoint
+
+- **Task API:** `GET/POST /api/v1/tasks`, task detail, status transitions, and
+  comments are implemented with company scoping and shared policy checks.
+- **Task history:** task status changes and comments create `TaskUpdate` rows
+  and append-only `ActivityLog` rows.
+- **Task UI:** `/tasks`, `/tasks/new`, and `/tasks/[taskId]` are connected to
+  the API with loading/error states, overdue indicators, status updates, and
+  comments.
+- **Validation:** API tests pass (32 passed, 1 skipped); lint, typecheck, and
+  production build pass. The PostgreSQL isolation test remains skipped because
+  `DATABASE_URL` is unavailable.
+- **Remaining:** mentions, uploads, Drive links, notification delivery, and
+  live end-to-end task acceptance tests.
 
 ### Milestone 3 — Dashboard
 

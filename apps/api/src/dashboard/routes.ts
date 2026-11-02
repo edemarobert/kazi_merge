@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { getCompanyId } from "../context/company-context.js";
 import { prisma } from "../db/prisma.js";
 import { requirePolicy } from "../policy/policy.js";
 
@@ -14,6 +15,7 @@ export function createDashboardRouter() {
       const [company, openTasks, overdue, dueThisWeek, blocked, workload, activity] =
         await Promise.all([
           prisma.company.findFirst({
+            where: { id: getCompanyId() },
             select: { name: true, trialEndsAt: true },
           }),
           prisma.task.count({

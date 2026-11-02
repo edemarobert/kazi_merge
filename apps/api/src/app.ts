@@ -10,6 +10,7 @@ import { completeGoogleIdentity, completePasswordlessIdentity } from "./auth/ind
 import { createCompanyRouter } from "./companies/routes.js";
 import { createPeopleRouter } from "./people/routes.js";
 import { createDashboardRouter } from "./dashboard/routes.js";
+import { createTasksRouter } from "./tasks/routes.js";
 
 export function createApp() {
   const app = express();
@@ -55,6 +56,7 @@ export function createApp() {
   app.use("/api/v1/companies", createCompanyRouter());
   app.use("/api/v1/people", createPeopleRouter());
   app.use("/api/v1/dashboard", createDashboardRouter());
+  app.use("/api/v1/tasks", createTasksRouter());
 
   app.get("/api/v1/health", (_request, response) => {
     response.json({ status: "ok", service: "api" });

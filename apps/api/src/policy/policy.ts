@@ -50,7 +50,7 @@ export class PolicyDeniedError extends Error {
 
 async function loadFacts(context: PolicyContext): Promise<PolicyFacts> {
   const activeCompanyId = requireCompanyId();
-  const actorUserId = context.actorUserId ?? getActorUserId();
+  const actorUserId = getActorUserId();
   if (!actorUserId) {
     throw new PolicyDeniedError("activity.view", "An authenticated actor is required.");
   }
