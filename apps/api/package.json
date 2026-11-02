@@ -9,6 +9,8 @@
     "test": "tsx --test test/app.test.ts"
   },
   "dependencies": {
+    "@prisma/client": "^6.17.1",
+    "@prisma/client": "6.17.1",
     "express": "5.1.0"
   },
   "devDependencies": {

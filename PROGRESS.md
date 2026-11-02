@@ -2,7 +2,8 @@
 
 ## Current task
 
-- [ ] Configure PostgreSQL, Prisma, and the initial migration.
+- [x] Configure PostgreSQL, Prisma, and the initial migration.
+- [ ] Model the Section 5 entities and required indexes.
 
 ## Milestones and tasks
 
@@ -144,6 +145,8 @@
 - The Next.js build reports that the Next.js ESLint plugin is not detected in
   the flat ESLint configuration; this is a non-blocking warning to revisit
   when Next-specific lint rules are needed.
+- Local PostgreSQL is not running in this environment, so the empty migration
+  baseline was generated and validated but not applied to a database.
 
 ## Open questions for the product owner
 

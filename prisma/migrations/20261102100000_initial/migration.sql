@@ -1,0 +1,2 @@
+-- Initial migration baseline.
+-- Business tables will be added in the Section 5 data-model task.
