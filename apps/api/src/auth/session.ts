@@ -28,6 +28,12 @@ type SessionStore = {
     }): Promise<SessionRecord>;
     delete(args: { where: { id: string } }): Promise<SessionRecord>;
   };
+  membership: {
+    findUnique(args: {
+      where: { companyId_userId: { companyId: string; userId: string } };
+      select: { status: true };
+    }): Promise<{ status: string } | null>;
+  };
 };
 
 export type AuthenticatedSession = {
@@ -66,6 +72,19 @@ export function createSessionService(store: SessionStore) {
         where: { tokenHash: hashSessionToken(token) },
       });
       if (!session || session.revokedAt || session.expiresAt.getTime() <= Date.now()) {
+        return null;
+      }
+
+      const membership = await store.membership.findUnique({
+        where: {
+          companyId_userId: {
+            companyId: session.companyId,
+            userId: session.userId,
+          },
+        },
+        select: { status: true },
+      });
+      if (!membership || membership.status !== "active") {
         return null;
       }
 

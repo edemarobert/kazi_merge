@@ -45,6 +45,11 @@ function createStore(initial?: StoredSession) {
         return deleted;
       },
     },
+    membership: {
+      async findUnique() {
+        return { status: "active" };
+      },
+    },
   };
 }
 
@@ -74,6 +79,21 @@ test("expired and revoked sessions cannot be resolved", async () => {
     expiresAt: new Date(Date.now() - 1),
     revokedAt: null,
     lastSeenAt: new Date(),
+  });
+
+  test("sessions for inactive memberships cannot be resolved", async () => {
+    const store = createStore({
+      id: "suspended",
+      userId: "user-a",
+      companyId: "company-a",
+      tokenHash: hashSessionToken("suspended-token"),
+      expiresAt: new Date(Date.now() + 60_000),
+      revokedAt: null,
+      lastSeenAt: new Date(),
+    });
+    store.membership.findUnique = async () => ({ status: "suspended" });
+
+    assert.equal(await createSessionService(store).resolve("suspended-token"), null);
   });
   const revokedStore = createStore({
     id: "revoked",
