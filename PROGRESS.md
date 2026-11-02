@@ -20,7 +20,7 @@
 
 ### Milestone 1 — Accounts, people, and access
 
-- [ ] Implement session and identity foundations.
+- [x] Implement session and identity foundations.
 - [ ] Add Google sign-in adapter and flow.
 - [ ] Add phone OTP and email-link adapter contracts and flows.
 - [ ] Implement company creation and the 30-day trial.
@@ -122,7 +122,8 @@
 - The specification is split into nine topic files without summarizing requirements.
 - No application code is to be written until setup is approved.
 - The product name is Kazi Merge; Kazi is the Kiswahili word for work.
-- The repository is documentation-only at the start of Milestone 0.
+- Milestone 0 was approved at 95% completion; live PostgreSQL isolation
+  verification remains the deferred evidence item.
 - Node.js v24.18.1 and npm v11.16.0 are available; pnpm is not installed.
 - No project-defined build, test, or start commands exist yet.
 ## Assumptions
@@ -148,10 +149,10 @@
   baseline was generated and validated but not applied to a database.
 - The Section 5 migration is generated and validated, but cannot be applied
   locally until PostgreSQL connection details are available.
-- The company-scoping guard is currently a reusable API helper; route and
-  Prisma-client wiring will be added as business modules are implemented.
-- The role-policy module is framework-neutral and accepts explicit team,
-  resource, and account scope flags until request authentication is added.
+- The company-scoping guard is wired into the Prisma client and authenticated
+  request context; business routes will be added as their modules are built.
+- The role-policy module is framework-neutral and now receives actor identity
+  from authenticated request context.
 - Demo seed data is deterministic and idempotent, but the seed command could
   not run because PostgreSQL is not available at localhost:5432.
 - Prisma 6 reports that the package.json seed configuration will need to move
@@ -159,6 +160,9 @@
 - The PWA shell uses placeholder dashboard data and profile information until
   authentication and business routes are implemented.
 - The navigation includes links to future screens; those routes are not
+  implemented yet.
+- Session persistence and authenticated request context are implemented, but
+  provider-specific sign-in adapters and user-facing sign-in routes are not
   implemented yet.
 
 ## Open questions for the product owner

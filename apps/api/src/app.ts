@@ -1,12 +1,12 @@
 import express from "express";
 import { errorHandler } from "./middleware/error-handler.js";
-import { tenantContextMiddleware } from "./middleware/tenant-context.js";
+import { authContextMiddleware } from "./middleware/auth-context.js";
 
 export function createApp() {
   const app = express();
 
   app.use(express.json());
-  app.use(tenantContextMiddleware);
+  app.use(authContextMiddleware);
 
   app.get("/api/v1/health", (_request, response) => {
     response.json({ status: "ok", service: "api" });
