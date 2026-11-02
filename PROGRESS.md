@@ -2,7 +2,7 @@
 
 ## Current task
 
-- [ ] Add company-scoping context and query guards.
+- [ ] Add the shared role-policy module skeleton.
 
 ## Milestones and tasks
 
@@ -13,7 +13,7 @@
 - [x] Configure TypeScript, formatting, linting, and test runners.
 - [x] Configure PostgreSQL, Prisma, and the initial migration.
 - [x] Model the Section 5 entities and required indexes.
-- [ ] Add company-scoping context and query guards.
+- [x] Add company-scoping context and query guards.
 - [ ] Add the shared role-policy module skeleton.
 - [ ] Add two-company seed data and cross-company isolation tests.
 - [ ] Add the PWA shell, navigation, and design tokens.
@@ -148,6 +148,8 @@
   baseline was generated and validated but not applied to a database.
 - The Section 5 migration is generated and validated, but cannot be applied
   locally until PostgreSQL connection details are available.
+- The company-scoping guard is currently a reusable API helper; route and
+  Prisma-client wiring will be added as business modules are implemented.
 
 ## Open questions for the product owner
 
