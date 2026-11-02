@@ -4,6 +4,7 @@ export type CompanyId = string & { readonly __brand: "CompanyId" };
 
 type CompanyContext = {
   companyId: CompanyId;
+  actorUserId?: string;
 };
 
 const companyStorage = new AsyncLocalStorage<CompanyContext>();
@@ -23,6 +24,10 @@ export function getCompanyId(): CompanyId | undefined {
   return companyStorage.getStore()?.companyId;
 }
 
+export function getActorUserId(): string | undefined {
+  return companyStorage.getStore()?.actorUserId;
+}
+
 export function requireCompanyId(): CompanyId {
   const currentCompanyId = getCompanyId();
   if (!currentCompanyId) {
@@ -35,13 +40,15 @@ export function requireCompanyId(): CompanyId {
 export function runWithCompanyContext<T>(
   currentCompanyId: CompanyId,
   callback: () => T,
+  actorUserId?: string,
 ): T {
-  return companyStorage.run({ companyId: currentCompanyId }, callback);
+  return companyStorage.run({ companyId: currentCompanyId, actorUserId }, callback);
 }
 
 export async function runWithCompanyContextAsync<T>(
   currentCompanyId: CompanyId,
   callback: () => Promise<T>,
+  actorUserId?: string,
 ): Promise<T> {
-  return companyStorage.run({ companyId: currentCompanyId }, callback);
+  return companyStorage.run({ companyId: currentCompanyId, actorUserId }, callback);
 }

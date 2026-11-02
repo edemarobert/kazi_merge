@@ -1,4 +1,6 @@
-import { MembershipRole } from "@prisma/client";
+import { MembershipRole, MembershipStatus } from "@prisma/client";
+import { getActorUserId, requireCompanyId } from "../context/company-context.js";
+import { prisma } from "../db/prisma.js";
 
 export type PolicyAction =
   | "company.settings.edit"
@@ -6,6 +8,8 @@ export type PolicyAction =
   | "people.invite.employee"
   | "people.profile.view.all"
   | "people.profile.edit"
+  | "people.profile.remove"
+  | "people.role.change"
   | "tasks.create"
   | "tasks.assign"
   | "tasks.view"
@@ -15,68 +19,128 @@ export type PolicyAction =
   | "integrations.connect";
 
 export type PolicyContext = {
+  actorUserId?: string;
+  targetEmployeeId?: string;
+  targetTaskId?: string;
+  targetUserId?: string;
+  targetTeamId?: string;
+};
+
+type PolicyFacts = {
   role: MembershipRole;
-  isOwnTeam?: boolean;
-  isOwnResource?: boolean;
-  isOwnAccount?: boolean;
+  employeeId: string;
+  isOwnTeam: boolean;
+  isOwnResource: boolean;
+  isOwnAccount: boolean;
 };
 
 export class PolicyDeniedError extends Error {
-  constructor(action: PolicyAction) {
-    super(`The ${contextLabel(action)} action is not permitted.`);
+  constructor(
+    public readonly action: PolicyAction,
+    message = `The ${action.replaceAll(".", " ")} action is not permitted.`,
+  ) {
+    super(message);
     this.name = "PolicyDeniedError";
   }
 }
 
-function contextLabel(action: PolicyAction): string {
-  return action.replaceAll(".", " ");
+async function loadFacts(context: PolicyContext): Promise<PolicyFacts> {
+  const activeCompanyId = requireCompanyId();
+  const actorUserId = context.actorUserId ?? getActorUserId();
+  if (!actorUserId) {
+    throw new PolicyDeniedError("activity.view", "An authenticated actor is required.");
+  }
+
+  const membership = await prisma.membership.findUnique({
+    where: {
+      companyId_userId: {
+        companyId: activeCompanyId,
+        userId: actorUserId,
+      },
+    },
+    include: { employee: true },
+  });
+  if (
+    !membership ||
+    membership.status !== MembershipStatus.active ||
+    !membership.employee
+  ) {
+    throw new PolicyDeniedError(
+      "activity.view",
+      "The actor is not an active company member.",
+    );
+  }
+
+  const targetEmployeeId = context.targetEmployeeId;
+  const targetTask = context.targetTaskId
+    ? await prisma.task.findFirst({
+        where: { id: context.targetTaskId },
+        select: { assigneeEmployeeId: true, teamId: true },
+      })
+    : undefined;
+  const targetTeamId = context.targetTeamId ?? targetTask?.teamId;
+  const isOwnTeam = targetTeamId
+    ? Boolean(
+        await prisma.teamMember.findFirst({
+          where: {
+            teamId: targetTeamId,
+            employeeId: membership.employee.id,
+          },
+        }),
+      )
+    : false;
+  const resourceEmployeeId = targetEmployeeId ?? targetTask?.assigneeEmployeeId;
+  return {
+    role: membership.role,
+    employeeId: membership.employee.id,
+    isOwnTeam,
+    isOwnResource: resourceEmployeeId === membership.employee.id,
+    isOwnAccount: context.targetUserId === actorUserId || !context.targetUserId,
+  };
 }
 
-export function can(action: PolicyAction, context: PolicyContext): boolean {
-  const {
-    role,
-    isOwnTeam = false,
-    isOwnResource = false,
-    isOwnAccount = false,
-  } = context;
-
-  if (role === MembershipRole.owner) {
+export async function can(
+  action: PolicyAction,
+  context: PolicyContext = {},
+): Promise<boolean> {
+  const facts = await loadFacts(context);
+  if (action === "integrations.connect") {
+    return facts.isOwnAccount;
+  }
+  if (facts.role === MembershipRole.owner) {
     return true;
   }
-
-  if (action === "integrations.connect") {
-    return isOwnAccount;
-  }
-
-  if (role === MembershipRole.employee) {
+  if (facts.role === MembershipRole.employee) {
     return (
-      (action === "people.profile.edit" && isOwnResource) ||
-      (action === "tasks.create" && isOwnResource) ||
-      (action === "tasks.view" && (isOwnResource || isOwnTeam)) ||
-      (action === "tasks.update" && isOwnResource) ||
-      (action === "activity.view" && isOwnResource)
+      (action === "people.profile.edit" && facts.isOwnResource) ||
+      (action === "tasks.create" && facts.isOwnResource) ||
+      (action === "tasks.view" && (facts.isOwnResource || facts.isOwnTeam)) ||
+      (action === "tasks.update" && facts.isOwnResource) ||
+      (action === "activity.view" && facts.isOwnResource)
     );
   }
-
-  if (role === MembershipRole.manager) {
+  if (facts.role === MembershipRole.manager) {
     return (
-      (action === "people.invite.employee" && isOwnTeam) ||
-      (action === "people.profile.view.all" && isOwnTeam) ||
-      (action === "people.profile.edit" && isOwnTeam) ||
+      (action === "people.invite.employee" && facts.isOwnTeam) ||
+      (action === "people.profile.view.all" && facts.isOwnTeam) ||
+      (action === "people.profile.edit" && facts.isOwnTeam) ||
+      (action === "people.profile.remove" && facts.isOwnTeam) ||
+      (action === "tasks.assign" && facts.isOwnTeam) ||
+      (action === "tasks.view" && facts.isOwnTeam) ||
+      (action === "tasks.update" && facts.isOwnTeam) ||
       action === "tasks.create" ||
-      (action === "tasks.assign" && isOwnTeam) ||
-      (action === "tasks.view" && isOwnTeam) ||
-      (action === "tasks.update" && isOwnTeam) ||
       action === "dashboard.view" ||
-      (action === "activity.view" && isOwnTeam)
+      (action === "activity.view" && facts.isOwnTeam)
     );
   }
-
   return false;
 }
 
-export function requirePolicy(action: PolicyAction, context: PolicyContext): void {
-  if (!can(action, context)) {
+export async function requirePolicy(
+  action: PolicyAction,
+  context: PolicyContext = {},
+): Promise<void> {
+  if (!(await can(action, context))) {
     throw new PolicyDeniedError(action);
   }
 }

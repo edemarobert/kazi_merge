@@ -49,7 +49,12 @@ async function seedCompany(company: (typeof demoCompanies)[number]) {
       },
     });
     await prisma.employee.upsert({
-      where: { membershipId: person.membershipId },
+      where: {
+        membershipId_companyId: {
+          membershipId: person.membershipId,
+          companyId: company.id,
+        },
+      },
       update: {
         companyId: company.id,
         jobTitle: role === "owner" ? "Owner" : "Employee",
@@ -64,7 +69,7 @@ async function seedCompany(company: (typeof demoCompanies)[number]) {
   }
 
   await prisma.department.upsert({
-    where: { id: company.department.id },
+    where: { id_companyId: { id: company.department.id, companyId: company.id } },
     update: { name: company.department.name },
     create: {
       id: company.department.id,
@@ -74,7 +79,7 @@ async function seedCompany(company: (typeof demoCompanies)[number]) {
     },
   });
   await prisma.team.upsert({
-    where: { id: company.team.id },
+    where: { id_companyId: { id: company.team.id, companyId: company.id } },
     update: { name: company.team.name },
     create: {
       id: company.team.id,
@@ -100,7 +105,7 @@ async function seedCompany(company: (typeof demoCompanies)[number]) {
     },
   });
   await prisma.task.upsert({
-    where: { id: company.task.id },
+    where: { id_companyId: { id: company.task.id, companyId: company.id } },
     update: { title: company.task.title },
     create: {
       id: company.task.id,
