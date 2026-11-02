@@ -2,7 +2,10 @@
 
 ## Current task
 
-- Build Milestone 2: tasks, conversation, and activity.
+- Milestone 2, Task 1 only: implement task creation, assignment, priorities,
+  and due dates.
+- Do not begin another Milestone 2 task until this task is fully verified and
+  the product owner explicitly approves the next task.
 
 ## Active remediation
 
@@ -80,29 +83,26 @@
 ### Milestone 2 — Tasks, conversation, and activity
 
 - [x] Implement task creation, assignment, priorities, and due dates.
-- [x] Implement task status transitions and blocked-reason validation.
-- [x] Build the initial task list and task detail views.
-- [x] Add status/priority filters and overdue indicators to the API/list.
-- [x] Implement the task conversation thread.
-- [x] Add comments, status events, and append-only activity rows.
+- [ ] Implement task status transitions and blocked-reason validation.
+- [ ] Build the initial task list and task detail views.
+- [ ] Add status/priority filters and overdue indicators to the API/list.
+- [ ] Implement the task conversation thread.
+- [ ] Add comments, status events, and append-only activity rows.
 - [ ] Add mentions and uploaded attachments.
 - [ ] Add Google Drive link attachment contracts.
 - [ ] Verify M4, M5, and M9 acceptance criteria.
 
 ### Milestone 2 implementation checkpoint
 
-- **Task API:** `GET/POST /api/v1/tasks`, task detail, status transitions, and
-  comments are implemented with company scoping and shared policy checks.
-- **Task history:** task status changes and comments create `TaskUpdate` rows
-  and append-only `ActivityLog` rows.
-- **Task UI:** `/tasks`, `/tasks/new`, and `/tasks/[taskId]` are connected to
-  the API with loading/error states, overdue indicators, status updates, and
-  comments.
+- **Task 1 status:** The task creation/assignment/priority/due-date slice is
+  implemented and validated. Additional code exists for later Milestone 2
+  tasks, but those tasks are not approved as complete and must not be extended
+  until the product owner approves them.
 - **Validation:** API tests pass (32 passed, 1 skipped); lint, typecheck, and
   production build pass. The PostgreSQL isolation test remains skipped because
   `DATABASE_URL` is unavailable.
-- **Remaining:** mentions, uploads, Drive links, notification delivery, and
-  live end-to-end task acceptance tests.
+- **Workflow rule:** Complete and verify one task, update this file, then stop
+  and wait for explicit approval before starting the next task.
 
 ### Milestone 3 — Dashboard
 
