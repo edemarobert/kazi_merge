@@ -2,7 +2,7 @@
 
 ## Current task
 
-- [ ] Add two-company seed data and cross-company isolation tests.
+- [ ] Add the PWA shell, navigation, and design tokens.
 
 ## Milestones and tasks
 
@@ -15,7 +15,7 @@
 - [x] Model the Section 5 entities and required indexes.
 - [x] Add company-scoping context and query guards.
 - [x] Add the shared role-policy module skeleton.
-- [ ] Add two-company seed data and cross-company isolation tests.
+- [x] Add two-company seed data and cross-company isolation tests.
 - [ ] Add the PWA shell, navigation, and design tokens.
 
 ### Milestone 1 — Accounts, people, and access
@@ -152,6 +152,10 @@
   Prisma-client wiring will be added as business modules are implemented.
 - The role-policy module is framework-neutral and accepts explicit team,
   resource, and account scope flags until request authentication is added.
+- Demo seed data is deterministic and idempotent, but the seed command could
+  not run because PostgreSQL is not available at localhost:5432.
+- Prisma 6 reports that the package.json seed configuration will need to move
+  to prisma.config.ts before a future Prisma 7 upgrade.
 
 ## Open questions for the product owner
 
