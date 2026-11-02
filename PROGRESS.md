@@ -2,7 +2,8 @@
 
 ## Current task
 
-- Build employee directory and profile views.
+- Complete M1–M3 acceptance gaps: API-backed CSV import, employee deactivation,
+  and route-level access-control verification.
 
 ## Milestones and tasks
 
@@ -30,6 +31,41 @@
 - [x] Build CSV import with preview and per-row errors.
 - [x] Implement role checks across account and people routes.
 - [ ] Verify M1–M3 acceptance criteria.
+
+### M1–M3 acceptance verification
+
+- **M1 — Google-only owner onboarding:** **Untested.** The company creation
+  service and Google adapter are covered by unit tests, but no browser or live
+  end-to-end sign-up flow has been executed.
+- **M1 — Phone OTP sign-up:** **Pass (unit evidence).** OTP expiry, five
+  attempts, cooldown, hashing, and single-use behavior pass
+  `apps/api/test/passwordless.test.ts`; a live provider flow remains untested.
+- **M1 — Invite acceptance activates the invited role:** **Pass (unit
+  evidence).** `apps/api/test/invites.test.ts` verifies expiry and activation;
+  live database verification remains unavailable.
+- **M1 — Cross-company isolation:** **Pass (test-double evidence), untested
+  against live PostgreSQL.** Company-scoped query tests pass, while the
+  PostgreSQL isolation test is skipped without `DATABASE_URL`.
+- **M2 — Import 30 employees with non-blocking row errors:** **Partial.** The
+  API parser/import service and focused tests pass, but
+  `apps/web/app/people/import/page.tsx` only performs a local preview and does
+  not call the import API.
+- **M2 — Manager changes update the org tree:** **Pass (service evidence).**
+  Manager validation and organization retrieval tests pass; live browser
+  refresh evidence is untested.
+- **M2 — Deactivation preserves history and removes assignees:** **Fail.**
+  No employee deactivation route or service exists yet.
+- **M3 — Employee task visibility:** **Untested.** Policy facts support
+  employee/team task scope, but task routes and route-level tests are not yet
+  implemented.
+- **M3 — Manager team/reporting scope:** **Partial.** Policy logic and
+  dedicated manager-change checks exist, but manager-scoped organization
+  filtering and complete route coverage are not yet verified.
+- **M3 — Owner-only role changes, manager invites, and removals:** **Fail.**
+  Role-change and employee-removal routes are not implemented.
+- **M3 — Denials return 403 and create activity logs:** **Partial.** The
+  global error middleware implements this behavior, but route-level denial
+  tests and live database evidence are still missing.
 
 ### Milestone 2 — Tasks, conversation, and activity
 
