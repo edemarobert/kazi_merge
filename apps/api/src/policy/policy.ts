@@ -7,6 +7,7 @@ export type PolicyAction =
   | "people.invite.manager"
   | "people.invite.employee"
   | "people.profile.view.all"
+  | "people.profile.view"
   | "people.profile.edit"
   | "people.profile.remove"
   | "people.role.change"
@@ -72,6 +73,12 @@ async function loadFacts(context: PolicyContext): Promise<PolicyFacts> {
   }
 
   const targetEmployeeId = context.targetEmployeeId;
+  const targetEmployeeTeams = targetEmployeeId
+    ? await prisma.teamMember.findMany({
+        where: { employeeId: targetEmployeeId },
+        select: { teamId: true },
+      })
+    : [];
   const targetTask = context.targetTaskId
     ? await prisma.task.findFirst({
         where: { id: context.targetTaskId },
@@ -82,13 +89,19 @@ async function loadFacts(context: PolicyContext): Promise<PolicyFacts> {
   const isOwnTeam = targetTeamId
     ? Boolean(
         await prisma.teamMember.findFirst({
-          where: {
-            teamId: targetTeamId,
-            employeeId: membership.employee.id,
-          },
+          where: { teamId: targetTeamId, employeeId: membership.employee.id },
         }),
       )
-    : false;
+    : targetEmployeeTeams.length > 0
+      ? Boolean(
+          await prisma.teamMember.findFirst({
+            where: {
+              employeeId: membership.employee.id,
+              teamId: { in: targetEmployeeTeams.map((team) => team.teamId) },
+            },
+          }),
+        )
+      : false;
   const resourceEmployeeId = targetEmployeeId ?? targetTask?.assigneeEmployeeId;
   return {
     role: membership.role,
@@ -113,6 +126,7 @@ export async function can(
   if (facts.role === MembershipRole.employee) {
     return (
       (action === "people.profile.edit" && facts.isOwnResource) ||
+      (action === "people.profile.view" && (facts.isOwnResource || facts.isOwnTeam)) ||
       (action === "tasks.create" && facts.isOwnResource) ||
       (action === "tasks.view" && (facts.isOwnResource || facts.isOwnTeam)) ||
       (action === "tasks.update" && facts.isOwnResource) ||
@@ -123,6 +137,7 @@ export async function can(
     return (
       (action === "people.invite.employee" && facts.isOwnTeam) ||
       (action === "people.profile.view.all" && facts.isOwnTeam) ||
+      (action === "people.profile.view" && facts.isOwnTeam) ||
       (action === "people.profile.edit" && facts.isOwnTeam) ||
       (action === "people.profile.remove" && facts.isOwnTeam) ||
       (action === "tasks.assign" && facts.isOwnTeam) ||

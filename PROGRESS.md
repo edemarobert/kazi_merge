@@ -25,7 +25,7 @@
 - [x] Add phone OTP and email-link adapter contracts and flows.
 - [x] Implement company creation and the 30-day trial.
 - [x] Implement invitations and invite acceptance.
-- [ ] Build employee directory and profile views.
+- [x] Build employee directory and profile views.
 - [ ] Build departments, teams, and reporting lines.
 - [ ] Build CSV import with preview and per-row errors.
 - [ ] Implement role checks across account and people routes.

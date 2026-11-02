@@ -39,6 +39,145 @@ a {
 button {
   font: inherit;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.primary-button {
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: white;
+  padding: 12px 16px;
+  font-weight: 700;
+}
+.directory-toolbar {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  margin-top: 40px;
+}
+.search-field {
+  flex: 1;
+}
+.search-field input,
+.filter-field select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 10px 12px;
+}
+.filter-field {
+  display: grid;
+  width: 160px;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.directory-count {
+  margin: 24px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.person-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 20px;
+}
+.person-card:hover {
+  border-color: #b7c5f7;
+  box-shadow: 0 4px 14px rgba(20, 33, 61, 0.06);
+}
+.avatar.large {
+  width: 48px;
+  height: 48px;
+}
+.person-card-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 4px;
+}
+.person-card-copy span,
+.person-card-copy small {
+  color: var(--muted);
+}
+.status-pill {
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.status-pill.active {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.status-pill.inactive {
+  background: var(--background);
+  color: var(--muted);
+}
+.empty-state {
+  grid-column: 1 / -1;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  padding: 32px;
+  text-align: center;
+}
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: var(--primary);
+  font-weight: 700;
+}
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.profile-header .status-pill {
+  margin-left: auto;
+}
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  font-size: 16px;
+}
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+.details-list {
+  display: grid;
+  gap: 18px;
+  margin: 24px 0 0;
+}
+.details-list dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+.details-list dd {
+  margin: 4px 0 0;
+  font-weight: 700;
+}
 
 .app-shell {
   display: flex;
