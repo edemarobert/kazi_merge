@@ -64,3 +64,4 @@ touches. Then:
 - Ask the LLM to write the seed data and test scripts first; they double as your demo data.
 - Review every migration and every permission rule yourself, because these are the costliest mistakes.
 
+

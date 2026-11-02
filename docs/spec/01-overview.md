@@ -61,3 +61,4 @@ Work Merge is a simple work operating system for growing Kampala businesses with
 | Commercial | 30-day free trial, plan flag per company | Billing with MTN MoMo and Airtel Money |
 
 **Explicit non-goals for the MVP:** payroll, tax, recruitment, attendance, leave, performance review scores, a general-purpose AI chatbot, and native mobile apps.
+

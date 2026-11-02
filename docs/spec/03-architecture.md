@@ -45,3 +45,4 @@ The web app and Google talk to the API, WhatsApp events arrive at the webhook, a
 - Secrets and tokens (Google refresh tokens, WhatsApp access token) are encrypted at rest and never logged.
 - Soft-delete people and tasks (`deleted_at`) so work history stays intact.
 
+

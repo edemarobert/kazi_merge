@@ -66,3 +66,4 @@ The pictures below are low-fidelity layouts for discussion and for any vision-ca
 
 **S6 and S8.** Each task has one-tap Done and Blocked buttons in the app, and the same task can be started, noted and tracked entirely in WhatsApp, with the note landing in the task thread.
 
+
