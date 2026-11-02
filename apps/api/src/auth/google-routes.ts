@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { sessionCookieName } from "./cookie.js";
+import { sessionCookie, sessionCookieName } from "./cookie.js";
+import { sessionLifetimeSeconds } from "./session.js";
 import {
   createGoogleOAuthClient,
   createGoogleState,
@@ -10,7 +11,11 @@ import {
 
 type GoogleRouteOptions = {
   config?: ReturnType<typeof readGoogleConfig>;
-  onIdentity?: (identity: GoogleIdentity) => Promise<{ userId: string }>;
+  onIdentity?: (identity: GoogleIdentity) => Promise<{
+    userId: string;
+    companyId?: string;
+    sessionToken?: string;
+  }>;
   fetcher?: typeof fetch;
 };
 
@@ -85,6 +90,12 @@ export function createGoogleAuthRouter(options: GoogleRouteOptions = {}) {
         return;
       }
       const result = await options.onIdentity(identity);
+      if (result.sessionToken) {
+        response.setHeader(
+          "Set-Cookie",
+          sessionCookie(result.sessionToken, sessionLifetimeSeconds),
+        );
+      }
       response.json({ userId: result.userId });
     } catch (error) {
       response.status(502).json({

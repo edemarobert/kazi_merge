@@ -1,5 +1,6 @@
 import { MembershipRole, Prisma } from "@prisma/client";
 import { Router } from "express";
+import multer from "multer";
 import { getActorUserId, requireCompanyId } from "../context/company-context.js";
 import { prisma } from "../db/prisma.js";
 import { requirePolicy, type PolicyAction } from "../policy/policy.js";
@@ -10,6 +11,7 @@ import { importEmployeeRows, previewEmployeeCsv } from "./csv-import.js";
 
 export function createPeopleRouter() {
   const router = Router();
+  const upload = multer({ limits: { fileSize: 2 * 1024 * 1024 } });
   const invites = createInviteService(prisma, Date.now, (callback) =>
     prisma.$transaction((transaction) =>
       callback(transaction as unknown as InviteStore),
@@ -53,16 +55,32 @@ export function createPeopleRouter() {
     }
   });
 
-  router.post("/import/preview", async (request, response) => {
-    await requirePolicy("people.import");
-    const csv = typeof request.body?.csv === "string" ? request.body.csv : "";
-    response.json(previewEmployeeCsv(csv));
-  });
+  router.post(
+    "/import/preview",
+    upload.single("file"),
+    async (request, response, next) => {
+      try {
+        await requirePolicy("people.import");
+        const csv = request.file
+          ? request.file.buffer.toString("utf8")
+          : typeof request.body?.csv === "string"
+            ? request.body.csv
+            : "";
+        response.json(previewEmployeeCsv(csv));
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
 
-  router.post("/import", async (request, response, next) => {
+  router.post("/import", upload.single("file"), async (request, response, next) => {
     try {
       await requirePolicy("people.import");
-      const csv = typeof request.body?.csv === "string" ? request.body.csv : "";
+      const csv = request.file
+        ? request.file.buffer.toString("utf8")
+        : typeof request.body?.csv === "string"
+          ? request.body.csv
+          : "";
       const preview = previewEmployeeCsv(csv);
       if (preview.errors.length > 0 && preview.rows.length === 0) {
         response.status(400).json(preview);

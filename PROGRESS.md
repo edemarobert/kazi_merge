@@ -2,8 +2,16 @@
 
 ## Current task
 
-- Complete M1–M3 acceptance gaps: API-backed CSV import, employee deactivation,
-  and route-level access-control verification.
+- Complete Milestone 1 remediation: secure authentication, permission
+  boundaries, and live web/API integrations.
+
+## Active remediation
+
+- [x] Issue secure session cookies from Google and passwordless sign-in.
+- [x] Enforce CSRF protection and authentication rate limits.
+- [x] Encrypt integration tokens at rest.
+- [x] Enforce owner-only removal and sanitized teammate profiles.
+- [x] Connect CSV import and dashboard UI to scoped API data.
 
 ## Milestones and tasks
 
@@ -162,6 +170,7 @@
   verification remains the deferred evidence item.
 - Node.js v24.18.1 and npm v11.16.0 are available; pnpm is not installed.
 - No project-defined build, test, or start commands exist yet.
+
 ## Assumptions
 
 - The default stack in the specification remains the starting point.

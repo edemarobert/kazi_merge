@@ -143,7 +143,6 @@ export async function can(
       (action === "people.profile.view.all" && facts.isOwnTeam) ||
       (action === "people.profile.view" && facts.isOwnTeam) ||
       (action === "people.profile.edit" && facts.isOwnTeam) ||
-      (action === "people.profile.remove" && facts.isOwnTeam) ||
       (action === "tasks.assign" && facts.isOwnTeam) ||
       (action === "tasks.view" && facts.isOwnTeam) ||
       (action === "tasks.update" && facts.isOwnTeam) ||

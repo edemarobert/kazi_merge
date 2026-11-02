@@ -18,6 +18,7 @@ export type GoogleIdentity = {
   email?: string;
   name: string;
   avatarUrl?: string;
+  refreshToken?: string;
 };
 
 export function readGoogleConfig(
@@ -104,7 +105,10 @@ export function createGoogleOAuthClient(
       if (!tokenResponse.ok) {
         throw new Error("Google authorization code exchange failed.");
       }
-      const tokenBody = (await tokenResponse.json()) as { id_token?: string };
+      const tokenBody = (await tokenResponse.json()) as {
+        id_token?: string;
+        refresh_token?: string;
+      };
       if (!tokenBody.id_token) {
         throw new Error("Google did not return an identity token.");
       }
@@ -136,6 +140,7 @@ export function createGoogleOAuthClient(
         email: identity.email,
         name: identity.name,
         avatarUrl: identity.picture,
+        ...(tokenBody.refresh_token ? { refreshToken: tokenBody.refresh_token } : {}),
       };
     },
   };

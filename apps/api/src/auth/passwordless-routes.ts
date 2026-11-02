@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { sessionCookie } from "./cookie.js";
+import { sessionLifetimeSeconds } from "./session.js";
 import {
   createEmailLinkService,
   normalizeEmail,
@@ -12,6 +14,7 @@ type PasswordlessRouteOptions = {
   emailLinkBaseUrl?: string;
   onVerified?: (identity: { email?: string; phoneE164?: string }) => Promise<{
     userId?: string;
+    sessionToken?: string;
   }>;
 };
 
@@ -69,6 +72,12 @@ export function createPasswordlessAuthRouter(options: PasswordlessRouteOptions =
         return;
       }
       const result = await options.onVerified({ phoneE164 });
+      if (result?.sessionToken) {
+        response.setHeader(
+          "Set-Cookie",
+          sessionCookie(result.sessionToken, sessionLifetimeSeconds),
+        );
+      }
       response.json({ verified: true, userId: result?.userId });
     } catch (error) {
       response.status(400).json({
@@ -124,6 +133,12 @@ export function createPasswordlessAuthRouter(options: PasswordlessRouteOptions =
         return;
       }
       const result = await options.onVerified({ email });
+      if (result?.sessionToken) {
+        response.setHeader(
+          "Set-Cookie",
+          sessionCookie(result.sessionToken, sessionLifetimeSeconds),
+        );
+      }
       response.json({ verified: true, userId: result?.userId });
     } catch (error) {
       response.status(400).json({

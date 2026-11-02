@@ -48,6 +48,8 @@ export function hashSessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+export const sessionLifetimeSeconds = 30 * 24 * 60 * 60;
+
 export function createSessionService(store: SessionStore) {
   return {
     async create(userId: string, companyId: string): Promise<string> {

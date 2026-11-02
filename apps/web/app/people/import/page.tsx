@@ -11,6 +11,12 @@ const sampleCsv =
 export default function ImportPeoplePage() {
   const [csv, setCsv] = useState(sampleCsv);
   const [previewed, setPreviewed] = useState(false);
+  const [preview, setPreview] = useState<{
+    rows: unknown[];
+    errors: { rowNumber: number; message: string }[];
+  } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [imported, setImported] = useState<number | null>(null);
   const rows = useMemo(() => csv.trim().split(/\r?\n/).filter(Boolean), [csv]);
 
   return (
@@ -43,7 +49,26 @@ export default function ImportPeoplePage() {
             <button
               className="primary-button"
               type="button"
-              onClick={() => setPreviewed(true)}
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  const form = new FormData();
+                  form.append(
+                    "file",
+                    new File([csv], "employees.csv", { type: "text/csv" }),
+                  );
+                  const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000"}/api/v1/people/import/preview`,
+                    { method: "POST", body: form, credentials: "include" },
+                  );
+                  if (!response.ok) throw new Error("CSV preview failed.");
+                  setPreview(await response.json());
+                  setPreviewed(true);
+                } finally {
+                  setBusy(false);
+                }
+              }}
             >
               {translations.importPeople.preview}
             </button>
@@ -53,8 +78,45 @@ export default function ImportPeoplePage() {
           </div>
           {previewed && (
             <div className="preview-result" role="status">
-              <strong>{translations.importPeople.previewReady}</strong>
+              <strong>
+                {preview?.rows.length ?? 0} valid rows, {preview?.errors.length ?? 0}{" "}
+                rows with errors
+              </strong>
               <p>{translations.importPeople.previewNote}</p>
+              {preview?.errors.map((error) => (
+                <p key={error.rowNumber}>
+                  Row {error.rowNumber}: {error.message}
+                </p>
+              ))}
+              <button
+                className="primary-button"
+                type="button"
+                disabled={busy || !preview || preview.rows.length === 0}
+                onClick={async () => {
+                  setBusy(true);
+                  try {
+                    const form = new FormData();
+                    form.append(
+                      "file",
+                      new File([csv], "employees.csv", { type: "text/csv" }),
+                    );
+                    const response = await fetch(
+                      `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000"}/api/v1/people/import`,
+                      { method: "POST", body: form, credentials: "include" },
+                    );
+                    if (!response.ok) throw new Error("CSV import failed.");
+                    const result = (await response.json()) as {
+                      imported: { rowNumber: number }[];
+                    };
+                    setImported(result.imported.length);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                Import valid rows
+              </button>
+              {imported !== null && <p>{imported} employees imported.</p>}
             </div>
           )}
         </section>

@@ -1,4 +1,6 @@
 import { EmployeeStatus, Prisma } from "@prisma/client";
+import { getActorUserId } from "../context/company-context.js";
+import { prisma } from "../db/prisma.js";
 import { can } from "../policy/policy.js";
 
 export const employeeProfileInclude = {
@@ -19,6 +21,31 @@ export const employeeProfileInclude = {
 export type EmployeeProfile = Prisma.EmployeeGetPayload<{
   include: typeof employeeProfileInclude;
 }>;
+
+function sanitizeTeammateProfile(employee: EmployeeProfile): EmployeeProfile {
+  return {
+    ...employee,
+    membership: {
+      ...employee.membership,
+      user: {
+        ...employee.membership.user,
+        email: null,
+        phoneE164: null,
+      },
+    },
+    manager: null,
+  };
+}
+
+async function shouldSanitizeTeammates(): Promise<boolean> {
+  const actorUserId = getActorUserId();
+  if (!actorUserId) return false;
+  const membership = await prisma.membership.findFirst({
+    where: { userId: actorUserId, status: "active" },
+    select: { role: true },
+  });
+  return membership?.role === "employee";
+}
 
 export type EmployeeDirectoryFilters = {
   search?: string;
@@ -57,10 +84,11 @@ export async function listVisibleEmployees(
     include: employeeProfileInclude,
     orderBy: { membership: { user: { name: "asc" } } },
   });
+  const sanitize = await shouldSanitizeTeammates();
   const visible: EmployeeProfile[] = [];
   for (const employee of employees) {
     if (await can("people.profile.view", { targetEmployeeId: employee.id })) {
-      visible.push(employee);
+      visible.push(sanitize ? sanitizeTeammateProfile(employee) : employee);
     }
   }
   return visible;
@@ -80,5 +108,7 @@ export async function getVisibleEmployee(
   ) {
     return null;
   }
-  return employee;
+  return (await shouldSanitizeTeammates())
+    ? sanitizeTeammateProfile(employee)
+    : employee;
 }

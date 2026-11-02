@@ -1,0 +1,76 @@
+import { Router } from "express";
+import { prisma } from "../db/prisma.js";
+import { requirePolicy } from "../policy/policy.js";
+
+export function createDashboardRouter() {
+  const router = Router();
+
+  router.get("/", async (_request, response, next) => {
+    try {
+      await requirePolicy("dashboard.view");
+      const now = new Date();
+      const weekEnd = new Date(now);
+      weekEnd.setDate(now.getDate() + (7 - now.getDay()));
+      const [company, openTasks, overdue, dueThisWeek, blocked, workload, activity] =
+        await Promise.all([
+          prisma.company.findFirst({
+            select: { name: true, trialEndsAt: true },
+          }),
+          prisma.task.count({
+            where: { deletedAt: null, status: { not: "done" } },
+          }),
+          prisma.task.count({
+            where: { deletedAt: null, status: { not: "done" }, dueAt: { lt: now } },
+          }),
+          prisma.task.count({
+            where: {
+              deletedAt: null,
+              status: { not: "done" },
+              dueAt: { gte: now, lte: weekEnd },
+            },
+          }),
+          prisma.task.count({ where: { deletedAt: null, status: "blocked" } }),
+          prisma.employee.findMany({
+            where: { status: "active", deletedAt: null },
+            select: {
+              id: true,
+              membership: { select: { user: { select: { name: true } } } },
+              assignedTasks: {
+                where: { deletedAt: null, status: { not: "done" } },
+                select: { dueAt: true },
+              },
+            },
+          }),
+          prisma.activityLog.findMany({
+            orderBy: { createdAt: "desc" },
+            take: 5,
+            select: { id: true, action: true, createdAt: true },
+          }),
+        ]);
+      const trialDays = company?.trialEndsAt
+        ? Math.max(
+            0,
+            Math.ceil((company.trialEndsAt.getTime() - now.getTime()) / 86400000),
+          )
+        : null;
+      response.json({
+        companyName: company?.name ?? null,
+        trialDays,
+        metrics: { openTasks, overdue, dueThisWeek, blocked },
+        workload: workload.map((employee) => ({
+          id: employee.id,
+          name: employee.membership.user.name,
+          open: employee.assignedTasks.length,
+          overdue: employee.assignedTasks.filter(
+            (task) => task.dueAt && task.dueAt < now,
+          ).length,
+        })),
+        activity,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  return router;
+}
