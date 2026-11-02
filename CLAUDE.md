@@ -1,8 +1,8 @@
-# Work Merge engineering guide
+# Kazi Merge engineering guide
 
-## What Work Merge is
+## What Kazi Merge is
 
-Work Merge is a mobile-first work operating system for growing Kampala businesses.
+Kazi Merge is a mobile-first work operating system for growing Kampala businesses.
 It connects employees, teams, tasks, conversations, progress, and completion in one
 record of work. Owners and managers use the web workspace while employees can
 receive and update work through WhatsApp or a lightweight phone experience.

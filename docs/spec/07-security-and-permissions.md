@@ -31,7 +31,7 @@ Three roles cover the MVP, and one shared policy module decides every permission
 
 ### 8.3 Privacy requirements
 
-Work Merge holds personal data about employees, so build for consent and minimal data from the start, in line with Uganda's Data Protection and Privacy Act, 2019. Confirm exact obligations with a qualified adviser before launch.
+Kazi Merge holds personal data about employees, so build for consent and minimal data from the start, in line with Uganda's Data Protection and Privacy Act, 2019. Confirm exact obligations with a qualified adviser before launch.
 
 - Collect only the profile fields the MVP uses. Do not store national ID numbers, salary or medical information.
 - Record WhatsApp opt-in with a timestamp and let people opt out at any time by replying STOP or in settings.

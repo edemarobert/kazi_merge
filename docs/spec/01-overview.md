@@ -1,4 +1,4 @@
-# Work Merge – MVP Build Specification
+# Kazi Merge – MVP Build Specification
 
 Nov 2, 2026 · @Edema Robert
 
@@ -30,7 +30,7 @@ Give this whole document to your LLM coding assistant as the single source of tr
 
 ## 2. Product overview and MVP scope
 
-Work Merge is a simple work operating system for growing Kampala businesses with 5 to 50 employees. It puts employees, teams, tasks and work conversations in one place, and meets people inside the tools they already use (Google and WhatsApp) instead of asking them to learn a new one.
+Kazi Merge is a simple work operating system for growing Kampala businesses with 5 to 50 employees. It puts employees, teams, tasks and work conversations in one place, and meets people inside the tools they already use (Google and WhatsApp) instead of asking them to learn a new one.
 
 **The problem.** Employee information sits in spreadsheets and paper, work is assigned in WhatsApp, and managers spend their day chasing updates. Nobody can easily answer who is working on what, what is late, and why.
 
@@ -44,7 +44,7 @@ Work Merge is a simple work operating system for growing Kampala businesses with
 
 **The core idea.** Every piece of work is one connected chain: Task, Employee, Conversation, Progress, Completion. This chain is the product's differentiator and must never be broken into separate screens.
 
-**Integration principle (from mentor review).** Users should not have to change their habits. Google handles sign-in, calendars and files. WhatsApp handles notifications and quick replies. Work Merge stores the single record of truth behind both.
+**Integration principle (from mentor review).** Users should not have to change their habits. Google handles sign-in, calendars and files. WhatsApp handles notifications and quick replies. Kazi Merge stores the single record of truth behind both.
 
 **MVP scope**
 

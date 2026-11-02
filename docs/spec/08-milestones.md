@@ -22,7 +22,7 @@ Stretch after milestone 7: task creation from a WhatsApp message with LLM parsin
 Paste this once at the start of the project, with the whole document attached.
 
 ```text
-You are the lead engineer building the Work Merge MVP. The attached
+You are the lead engineer building the Kazi Merge MVP. The attached
 specification is the single source of truth.
 
 Rules:

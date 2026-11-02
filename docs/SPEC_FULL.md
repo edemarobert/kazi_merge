@@ -1,4 +1,4 @@
-# Work Merge – MVP Build Specification
+# Kazi Merge – MVP Build Specification
 
 Nov 2, 2026 · @Edema Robert
 
@@ -30,7 +30,7 @@ Give this whole document to your LLM coding assistant as the single source of tr
 
 ## 2. Product overview and MVP scope
 
-Work Merge is a simple work operating system for growing Kampala businesses with 5 to 50 employees. It puts employees, teams, tasks and work conversations in one place, and meets people inside the tools they already use (Google and WhatsApp) instead of asking them to learn a new one.
+Kazi Merge is a simple work operating system for growing Kampala businesses with 5 to 50 employees. It puts employees, teams, tasks and work conversations in one place, and meets people inside the tools they already use (Google and WhatsApp) instead of asking them to learn a new one.
 
 **The problem.** Employee information sits in spreadsheets and paper, work is assigned in WhatsApp, and managers spend their day chasing updates. Nobody can easily answer who is working on what, what is late, and why.
 
@@ -44,7 +44,7 @@ Work Merge is a simple work operating system for growing Kampala businesses with
 
 **The core idea.** Every piece of work is one connected chain: Task, Employee, Conversation, Progress, Completion. This chain is the product's differentiator and must never be broken into separate screens.
 
-**Integration principle (from mentor review).** Users should not have to change their habits. Google handles sign-in, calendars and files. WhatsApp handles notifications and quick replies. Work Merge stores the single record of truth behind both.
+**Integration principle (from mentor review).** Users should not have to change their habits. Google handles sign-in, calendars and files. WhatsApp handles notifications and quick replies. Kazi Merge stores the single record of truth behind both.
 
 **MVP scope**
 
@@ -64,19 +64,19 @@ Work Merge is a simple work operating system for growing Kampala businesses with
 
 ## 3. Integration strategy: Google and WhatsApp
 
-Google and WhatsApp are where Kampala teams already work, so Work Merge treats them as front doors, not extras: an employee should be able to join, receive work, update it and finish it without ever opening the Work Merge website. The web app remains the full workspace for owners and managers.
+Google and WhatsApp are where Kampala teams already work, so Kazi Merge treats them as front doors, not extras: an employee should be able to join, receive work, update it and finish it without ever opening the Kazi Merge website. The web app remains the full workspace for owners and managers.
 
 ### 3.1 What each integration does
 
 | Integration | MVP capability | Direction | User friction removed |
 | --- | --- | --- | --- |
-| Google Sign-In | Create account and sign in with a Google account (OpenID Connect) | Google to Work Merge | No new password |
-| Google Calendar | Task due dates appear as calendar events for the assignee, updated when the task changes | Work Merge to Google | Deadlines show up in the calendar people already check |
-| Google Drive | Attach existing Drive files to a task through the Google Picker; store the link, not a copy | Google to Work Merge | No re-uploading, one version of each file |
-| Google Sheets / CSV | Import employees from a Google Sheet or CSV | Google to Work Merge | Moves off the spreadsheet in minutes |
-| WhatsApp notifications | Employee gets a WhatsApp message when a task is assigned, due soon, overdue or commented on | Work Merge to WhatsApp | Updates arrive where people already look |
-| WhatsApp replies | Employee taps a button (Done, In progress, Blocked) or replies with a note; the task and its thread update | WhatsApp to Work Merge | Update work in seconds without logging in |
-| WhatsApp owner digest | Owner receives a short daily summary: overdue, due today, completed | Work Merge to WhatsApp | Visibility without opening a dashboard |
+| Google Sign-In | Create account and sign in with a Google account (OpenID Connect) | Google to Kazi Merge | No new password |
+| Google Calendar | Task due dates appear as calendar events for the assignee, updated when the task changes | Kazi Merge to Google | Deadlines show up in the calendar people already check |
+| Google Drive | Attach existing Drive files to a task through the Google Picker; store the link, not a copy | Google to Kazi Merge | No re-uploading, one version of each file |
+| Google Sheets / CSV | Import employees from a Google Sheet or CSV | Google to Kazi Merge | Moves off the spreadsheet in minutes |
+| WhatsApp notifications | Employee gets a WhatsApp message when a task is assigned, due soon, overdue or commented on | Kazi Merge to WhatsApp | Updates arrive where people already look |
+| WhatsApp replies | Employee taps a button (Done, In progress, Blocked) or replies with a note; the task and its thread update | WhatsApp to Kazi Merge | Update work in seconds without logging in |
+| WhatsApp owner digest | Owner receives a short daily summary: overdue, due today, completed | Kazi Merge to WhatsApp | Visibility without opening a dashboard |
 | Phone OTP and SMS | Sign in with a phone number; SMS fallback for people not on WhatsApp | Both | Works for users without Google or smartphones |
 
 Stretch goal after the MVP is stable: a manager sends a WhatsApp message such as "Assign John the customer report by Friday", an LLM drafts the task, and the manager confirms with a button. This is not required for MVP.
@@ -85,7 +85,7 @@ Stretch goal after the MVP is stable: a manager sends a WhatsApp message such as
 
 - Sign-in uses only the `openid`, `email` and `profile` scopes.
 - Calendar sync is optional and requested later, only when the user turns it on (incremental authorisation), using the `calendar.events` scope.
-- Drive uses the Google Picker with the narrow `drive.file` scope, so Work Merge can only touch files the user explicitly picks. Never request full Drive access.
+- Drive uses the Google Picker with the narrow `drive.file` scope, so Kazi Merge can only touch files the user explicitly picks. Never request full Drive access.
 - Store only the Drive file id, name, URL and MIME type.
 - Calendar sync is one-way. Deleting an event in Google does not change the task; completing a task removes or marks its event.
 - Plan for Google's OAuth app verification early. Sensitive scopes need it before public launch. While the app is in testing mode, up to 100 named test users can use it, which is enough for the first pilot companies.
@@ -95,9 +95,9 @@ Stretch goal after the MVP is stable: a manager sends a WhatsApp message such as
 
 Use the WhatsApp Business Platform (Cloud API from Meta). These constraints shape the design; confirm current details and pricing in Meta's documentation before building.
 
-- Business-initiated messages need pre-approved message templates. Free-form replies are only allowed inside the 24-hour window after the user last messaged Work Merge.
+- Business-initiated messages need pre-approved message templates. Free-form replies are only allowed inside the 24-hour window after the user last messaged Kazi Merge.
 - The user must opt in. Capture consent with an invite link that opens WhatsApp with a prefilled message (for example `JOIN <code>`). When the employee sends it, the phone number is verified, linked to their profile, and the 24-hour window opens.
-- Start with one Work Merge business number shared by all companies. Every message names the company so the employee knows who is writing.
+- Start with one Kazi Merge business number shared by all companies. Every message names the company so the employee knows who is writing.
 - The webhook must verify Meta's signature, acknowledge within a few seconds, deduplicate by WhatsApp message id, and push the real work onto a queue.
 - Do not depend on WhatsApp group chats in the MVP.
 - Always have a fallback: if a WhatsApp message fails or the user is not opted in, send SMS or email and show the status in the app.
@@ -106,10 +106,10 @@ Use the WhatsApp Business Platform (Cloud API from Meta). These constraints shap
 
 | Template | Trigger | Buttons |
 | --- | --- | --- |
-| `task_assigned` | A task is assigned to the employee | Start, Open in Work Merge |
+| `task_assigned` | A task is assigned to the employee | Start, Open in Kazi Merge |
 | `task_due_soon` | A set time before the due date | Done, Need more time |
 | `task_overdue` | The due date has passed and the task is open | Done, Blocked |
-| `task_comment` | Someone comments on the employee's task | Reply, Open in Work Merge |
+| `task_comment` | Someone comments on the employee's task | Reply, Open in Kazi Merge |
 | `owner_daily_digest` | Each morning at the owner's chosen time | Open dashboard |
 
 **Reply handling**
@@ -145,7 +145,7 @@ Implementations: `WhatsAppChannel`, `SmsChannel`, `EmailChannel`, `InAppChannel`
 
 ## 4. System architecture and components
 
-Work Merge is a modular monolith: one web app, one API with clearly separated modules, one background worker, and a single PostgreSQL database, connected to Google, WhatsApp, SMS and email through adapters.
+Kazi Merge is a modular monolith: one web app, one API with clearly separated modules, one background worker, and a single PostgreSQL database, connected to Google, WhatsApp, SMS and email through adapters.
 
 &#91;embedded content: architecture · 4 channels, 3 services, 2 data stores\]
 
@@ -341,7 +341,7 @@ Nine modules make up the MVP. Each lists what to build and the checks that must 
 
 ## 7. Look and feel
 
-Work Merge should feel like a calm, plain-spoken to-do board for a business, not like heavy HR software. A first-time user should understand every screen without training.
+Kazi Merge should feel like a calm, plain-spoken to-do board for a business, not like heavy HR software. A first-time user should understand every screen without training.
 
 ### 7.1 Design principles
 
@@ -440,7 +440,7 @@ Three roles cover the MVP, and one shared policy module decides every permission
 
 ### 8.3 Privacy requirements
 
-Work Merge holds personal data about employees, so build for consent and minimal data from the start, in line with Uganda's Data Protection and Privacy Act, 2019. Confirm exact obligations with a qualified adviser before launch.
+Kazi Merge holds personal data about employees, so build for consent and minimal data from the start, in line with Uganda's Data Protection and Privacy Act, 2019. Confirm exact obligations with a qualified adviser before launch.
 
 - Collect only the profile fields the MVP uses. Do not store national ID numbers, salary or medical information.
 - Record WhatsApp opt-in with a timestamp and let people opt out at any time by replying STOP or in settings.
@@ -473,7 +473,7 @@ Stretch after milestone 7: task creation from a WhatsApp message with LLM parsin
 Paste this once at the start of the project, with the whole document attached.
 
 ```text
-You are the lead engineer building the Work Merge MVP. The attached
+You are the lead engineer building the Kazi Merge MVP. The attached
 specification is the single source of truth.
 
 Rules:
@@ -545,7 +545,7 @@ These come from the Lean Canvas key metrics. Log an event for each so they can b
 
 ### 10.3 Open questions for the product owner
 
-1. Who owns the Meta business account, and has the Work Merge WhatsApp number been verified? Template approval takes time, so start early.
+1. Who owns the Meta business account, and has the Kazi Merge WhatsApp number been verified? Template approval takes time, so start early.
 2. Is the target 5 to 50 or 10 to 50 employees? The Lean Canvas and the competitive document differ.
 3. Should a task have one assignee or several? This document assumes one for the MVP.
 4. Is English enough for the MVP, or is Luganda needed at launch?

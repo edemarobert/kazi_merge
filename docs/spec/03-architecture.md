@@ -1,6 +1,6 @@
 ## 4. System architecture and components
 
-Work Merge is a modular monolith: one web app, one API with clearly separated modules, one background worker, and a single PostgreSQL database, connected to Google, WhatsApp, SMS and email through adapters.
+Kazi Merge is a modular monolith: one web app, one API with clearly separated modules, one background worker, and a single PostgreSQL database, connected to Google, WhatsApp, SMS and email through adapters.
 
 &#91;embedded content: architecture · 4 channels, 3 services, 2 data stores\]
 

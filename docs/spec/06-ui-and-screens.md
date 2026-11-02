@@ -1,6 +1,6 @@
 ## 7. Look and feel
 
-Work Merge should feel like a calm, plain-spoken to-do board for a business, not like heavy HR software. A first-time user should understand every screen without training.
+Kazi Merge should feel like a calm, plain-spoken to-do board for a business, not like heavy HR software. A first-time user should understand every screen without training.
 
 ### 7.1 Design principles
 

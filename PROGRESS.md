@@ -1,4 +1,4 @@
-# Work Merge MVP progress
+# Kazi Merge MVP progress
 
 ## Current task
 
@@ -120,7 +120,7 @@
 - The text in `docs/SPEC_FULL.md` is the source of truth.
 - The specification is split into nine topic files without summarizing requirements.
 - No application code is to be written until setup is approved.
-
+- The product name is Kazi Merge; Kazi is the Kiswahili word for work.
 ## Assumptions
 
 - The default stack in the specification remains the starting point.

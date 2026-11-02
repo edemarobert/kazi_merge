@@ -28,7 +28,7 @@ These come from the Lean Canvas key metrics. Log an event for each so they can b
 
 ### 10.3 Open questions for the product owner
 
-1. Who owns the Meta business account, and has the Work Merge WhatsApp number been verified? Template approval takes time, so start early.
+1. Who owns the Meta business account, and has the Kazi Merge WhatsApp number been verified? Template approval takes time, so start early.
 2. Is the target 5 to 50 or 10 to 50 employees? The Lean Canvas and the competitive document differ.
 3. Should a task have one assignee or several? This document assumes one for the MVP.
 4. Is English enough for the MVP, or is Luganda needed at launch?
