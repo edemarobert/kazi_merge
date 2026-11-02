@@ -2,7 +2,7 @@
 
 ## Current task
 
-- [ ] Add the shared role-policy module skeleton.
+- [ ] Add two-company seed data and cross-company isolation tests.
 
 ## Milestones and tasks
 
@@ -14,7 +14,7 @@
 - [x] Configure PostgreSQL, Prisma, and the initial migration.
 - [x] Model the Section 5 entities and required indexes.
 - [x] Add company-scoping context and query guards.
-- [ ] Add the shared role-policy module skeleton.
+- [x] Add the shared role-policy module skeleton.
 - [ ] Add two-company seed data and cross-company isolation tests.
 - [ ] Add the PWA shell, navigation, and design tokens.
 
@@ -150,6 +150,8 @@
   locally until PostgreSQL connection details are available.
 - The company-scoping guard is currently a reusable API helper; route and
   Prisma-client wiring will be added as business modules are implemented.
+- The role-policy module is framework-neutral and accepts explicit team,
+  resource, and account scope flags until request authentication is added.
 
 ## Open questions for the product owner
 
