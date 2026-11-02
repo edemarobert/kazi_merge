@@ -2,7 +2,7 @@
 
 ## Current task
 
-- [ ] Await approval of the setup and milestone breakdown before writing application code.
+- [ ] Create the web app and API modular-monolith shells.
 
 ## Milestones and tasks
 
@@ -114,6 +114,7 @@
 - [x] Read and split the full specification into topic documents.
 - [x] Create project engineering rules.
 - [x] Create the milestone and task tracker.
+- [x] Approve the setup and milestone breakdown.
 
 ## Decisions made
 
@@ -121,6 +122,9 @@
 - The specification is split into nine topic files without summarizing requirements.
 - No application code is to be written until setup is approved.
 - The product name is Kazi Merge; Kazi is the Kiswahili word for work.
+- The repository is documentation-only at the start of Milestone 0.
+- Node.js v24.18.1 and npm v11.16.0 are available; pnpm is not installed.
+- No project-defined build, test, or start commands exist yet.
 ## Assumptions
 
 - The default stack in the specification remains the starting point.
@@ -131,7 +135,8 @@
 
 - Product-owner decisions in the open-questions document are not yet confirmed.
 - External provider credentials, production domains, and deployment settings are not configured.
-- No application code, migrations, tests, or deployment artifacts have been created.
+- No application code, migrations, tests, deployment artifacts, package manifest,
+  or app entrypoint have been created.
 
 ## Open questions for the product owner
 
