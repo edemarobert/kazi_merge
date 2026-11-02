@@ -66,4 +66,13 @@ export const translations = {
     noDepartment: "No department",
     noTeams: "No teams assigned",
   },
+  teams: {
+    eyebrow: "Organisation",
+    title: "Teams and reporting lines",
+    intro: "See departments, team leads, and who reports to whom.",
+    departments: "Departments",
+    members: "members",
+    reportsTo: "Reports to",
+    noTeams: "No teams yet",
+  },
 } as const;

@@ -5,6 +5,7 @@ import { prisma } from "../db/prisma.js";
 import { requirePolicy, type PolicyAction } from "../policy/policy.js";
 import { getVisibleEmployee, listVisibleEmployees } from "./directory.js";
 import { createInviteService, type InviteStore } from "./invites.js";
+import { changeManager, listOrganization } from "./organization.js";
 
 export function createPeopleRouter() {
   const router = Router();
@@ -23,6 +24,62 @@ export function createPeopleRouter() {
         args as Prisma.EmployeeFindFirstArgs,
       )) as unknown as Awaited<ReturnType<typeof getVisibleEmployee>>,
   };
+  const organizationStore = {
+    department: {
+      findMany: async (args: unknown) =>
+        (await prisma.department.findMany(
+          args as Prisma.DepartmentFindManyArgs,
+        )) as unknown as Awaited<ReturnType<typeof listOrganization>>,
+    },
+    employee: {
+      findFirst: async (args: unknown) =>
+        (await prisma.employee.findFirst(
+          args as Prisma.EmployeeFindFirstArgs,
+        )) as unknown as { id: string } | null,
+      update: async (args: unknown) =>
+        (await prisma.employee.update(
+          args as Prisma.EmployeeUpdateArgs,
+        )) as unknown as { id: string; managerId: string | null },
+    },
+  };
+
+  router.get("/organization", async (_request, response, next) => {
+    try {
+      response.json({ departments: await listOrganization(organizationStore) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch("/:employeeId/manager", async (request, response, next) => {
+    try {
+      await requirePolicy("people.profile.edit", {
+        targetEmployeeId: request.params.employeeId,
+      });
+      const managerId =
+        request.body?.managerId === null
+          ? null
+          : typeof request.body?.managerId === "string"
+            ? request.body.managerId
+            : undefined;
+      if (managerId === undefined) {
+        response.status(400).json({
+          code: "invalid_manager",
+          message: "managerId must be a string or null.",
+        });
+        return;
+      }
+      response.json({
+        employee: await changeManager(
+          organizationStore,
+          request.params.employeeId,
+          managerId,
+        ),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   router.get("/", async (request, response, next) => {
     try {

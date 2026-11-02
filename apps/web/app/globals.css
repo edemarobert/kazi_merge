@@ -165,6 +165,54 @@ button {
   gap: 16px;
   margin-top: 16px;
 }
+.organization-tree {
+  display: grid;
+  gap: 16px;
+  margin-top: 40px;
+}
+.organization-heading,
+.team-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.organization-head,
+.team-heading span,
+.team-lead,
+.organization-team small {
+  color: var(--muted);
+  font-size: 13px;
+}
+.organization-teams {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 24px;
+}
+.organization-team {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.team-lead {
+  margin: 8px 0 12px;
+}
+.organization-team ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.organization-team li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.organization-team li small {
+  margin-left: auto;
+}
 .details-list {
   display: grid;
   gap: 18px;
