@@ -2,7 +2,7 @@
 
 ## Current task
 
-- Implement company creation and the 30-day trial.
+- Implement invitations and invite acceptance.
 
 ## Milestones and tasks
 
@@ -23,7 +23,7 @@
 - [x] Implement session and identity foundations.
 - [x] Add Google sign-in adapter and flow.
 - [x] Add phone OTP and email-link adapter contracts and flows.
-- [ ] Implement company creation and the 30-day trial.
+- [x] Implement company creation and the 30-day trial.
 - [ ] Implement invitations and invite acceptance.
 - [ ] Build employee directory and profile views.
 - [ ] Build departments, teams, and reporting lines.
