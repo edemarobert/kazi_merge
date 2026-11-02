@@ -6,6 +6,7 @@ import { requirePolicy, type PolicyAction } from "../policy/policy.js";
 import { getVisibleEmployee, listVisibleEmployees } from "./directory.js";
 import { createInviteService, type InviteStore } from "./invites.js";
 import { changeManager, listOrganization } from "./organization.js";
+import { importEmployeeRows, previewEmployeeCsv } from "./csv-import.js";
 
 export function createPeopleRouter() {
   const router = Router();
@@ -46,6 +47,33 @@ export function createPeopleRouter() {
   router.get("/organization", async (_request, response, next) => {
     try {
       response.json({ departments: await listOrganization(organizationStore) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/import/preview", async (request, response) => {
+    const csv = typeof request.body?.csv === "string" ? request.body.csv : "";
+    response.json(previewEmployeeCsv(csv));
+  });
+
+  router.post("/import", async (request, response, next) => {
+    try {
+      await requirePolicy("people.import");
+      const csv = typeof request.body?.csv === "string" ? request.body.csv : "";
+      const preview = previewEmployeeCsv(csv);
+      if (preview.errors.length > 0 && preview.rows.length === 0) {
+        response.status(400).json(preview);
+        return;
+      }
+      const result = await prisma.$transaction(async (transaction) =>
+        importEmployeeRows(
+          transaction as unknown as Parameters<typeof importEmployeeRows>[0],
+          requireCompanyId(),
+          preview.rows,
+        ),
+      );
+      response.status(201).json({ ...result, previewErrors: preview.errors });
     } catch (error) {
       next(error);
     }

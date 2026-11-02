@@ -10,6 +10,7 @@ export type PolicyAction =
   | "people.profile.view"
   | "people.profile.edit"
   | "people.profile.remove"
+  | "people.import"
   | "people.role.change"
   | "tasks.create"
   | "tasks.assign"

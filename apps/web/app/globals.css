@@ -213,6 +213,42 @@ button {
 .organization-team li small {
   margin-left: auto;
 }
+.import-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 40px;
+}
+.import-label {
+  font-weight: 700;
+}
+.import-panel textarea {
+  width: 100%;
+  min-height: 220px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: 14px/1.5 monospace;
+  padding: 12px;
+}
+.import-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.import-actions span {
+  color: var(--muted);
+  font-size: 14px;
+}
+.preview-result {
+  border-radius: var(--radius);
+  background: var(--success-soft);
+  color: var(--success);
+  padding: 16px;
+}
+.preview-result p {
+  margin: 6px 0 0;
+  color: var(--ink);
+}
 .details-list {
   display: grid;
   gap: 18px;

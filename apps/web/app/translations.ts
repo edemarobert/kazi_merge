@@ -75,4 +75,16 @@ export const translations = {
     reportsTo: "Reports to",
     noTeams: "No teams yet",
   },
+  importPeople: {
+    eyebrow: "People",
+    title: "Import employees",
+    intro:
+      "Preview your CSV first. Valid rows can be saved even when another row needs fixing.",
+    csvLabel: "CSV contents",
+    preview: "Preview import",
+    rows: "data rows",
+    previewReady: "Preview ready",
+    previewNote:
+      "Rows with validation errors will be listed here before anything is saved.",
+  },
 } as const;
