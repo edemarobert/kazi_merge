@@ -2,7 +2,7 @@
 
 ## Current task
 
-- [ ] Add the PWA shell, navigation, and design tokens.
+- Implement session and identity foundations.
 
 ## Milestones and tasks
 
@@ -16,7 +16,7 @@
 - [x] Add company-scoping context and query guards.
 - [x] Add the shared role-policy module skeleton.
 - [x] Add two-company seed data and cross-company isolation tests.
-- [ ] Add the PWA shell, navigation, and design tokens.
+- [x] Add the PWA shell, navigation, and design tokens.
 
 ### Milestone 1 — Accounts, people, and access
 
@@ -156,6 +156,10 @@
   not run because PostgreSQL is not available at localhost:5432.
 - Prisma 6 reports that the package.json seed configuration will need to move
   to prisma.config.ts before a future Prisma 7 upgrade.
+- The PWA shell uses placeholder dashboard data and profile information until
+  authentication and business routes are implemented.
+- The navigation includes links to future screens; those routes are not
+  implemented yet.
 
 ## Open questions for the product owner
 
