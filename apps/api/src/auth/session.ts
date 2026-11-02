@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import { companyId, runWithCompanyContextAsync } from "../context/company-context.js";
 
 const sessionLifetimeMs = 30 * 24 * 60 * 60 * 1000;
 
@@ -75,15 +76,20 @@ export function createSessionService(store: SessionStore) {
         return null;
       }
 
-      const membership = await store.membership.findUnique({
-        where: {
-          companyId_userId: {
-            companyId: session.companyId,
-            userId: session.userId,
-          },
-        },
-        select: { status: true },
-      });
+      const membership = await runWithCompanyContextAsync(
+        companyId(session.companyId),
+        () =>
+          store.membership.findUnique({
+            where: {
+              companyId_userId: {
+                companyId: session.companyId,
+                userId: session.userId,
+              },
+            },
+            select: { status: true },
+          }),
+        session.userId,
+      );
       if (!membership || membership.status !== "active") {
         return null;
       }

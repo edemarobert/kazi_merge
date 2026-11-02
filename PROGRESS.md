@@ -2,7 +2,7 @@
 
 ## Current task
 
-- Implement session and identity foundations.
+- Add phone OTP and email-link adapter contracts and flows.
 
 ## Milestones and tasks
 
@@ -21,7 +21,7 @@
 ### Milestone 1 — Accounts, people, and access
 
 - [x] Implement session and identity foundations.
-- [ ] Add Google sign-in adapter and flow.
+- [x] Add Google sign-in adapter and flow.
 - [ ] Add phone OTP and email-link adapter contracts and flows.
 - [ ] Implement company creation and the 30-day trial.
 - [ ] Implement invitations and invite acceptance.

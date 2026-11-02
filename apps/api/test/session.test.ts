@@ -81,6 +81,16 @@ test("expired and revoked sessions cannot be resolved", async () => {
     lastSeenAt: new Date(),
   });
 
+  const revokedStore = createStore({
+    id: "revoked",
+    userId: "user-a",
+    companyId: "company-a",
+    tokenHash: hashSessionToken("revoked-token"),
+    expiresAt: new Date(Date.now() + 60_000),
+    revokedAt: new Date(),
+    lastSeenAt: new Date(),
+  });
+
   test("sessions for inactive memberships cannot be resolved", async () => {
     const store = createStore({
       id: "suspended",
@@ -94,15 +104,6 @@ test("expired and revoked sessions cannot be resolved", async () => {
     store.membership.findUnique = async () => ({ status: "suspended" });
 
     assert.equal(await createSessionService(store).resolve("suspended-token"), null);
-  });
-  const revokedStore = createStore({
-    id: "revoked",
-    userId: "user-a",
-    companyId: "company-a",
-    tokenHash: hashSessionToken("revoked-token"),
-    expiresAt: new Date(Date.now() + 60_000),
-    revokedAt: new Date(),
-    lastSeenAt: new Date(),
   });
 
   assert.equal(await createSessionService(expiredStore).resolve("expired-token"), null);
