@@ -1,0 +1,14 @@
+{
+  "name": "kazi-merge",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "apps/api"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @kazi-merge/web && npm run build --workspace @kazi-merge/api",
+    "dev:web": "npm run dev --workspace @kazi-merge/web",
+    "dev:api": "npm run dev --workspace @kazi-merge/api",
+    "test": "npm run test --workspace @kazi-merge/api"
+  }
+}

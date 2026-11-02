@@ -2,14 +2,14 @@
 
 ## Current task
 
-- [ ] Create the web app and API modular-monolith shells.
+- [ ] Configure TypeScript, formatting, linting, and test runners.
 
 ## Milestones and tasks
 
 ### Milestone 0 — Foundation
 
-- [ ] Confirm repository structure and local development commands.
-- [ ] Create the web app and API modular-monolith shells.
+- [x] Confirm repository structure and local development commands.
+- [x] Create the web app and API modular-monolith shells.
 - [ ] Configure TypeScript, formatting, linting, and test runners.
 - [ ] Configure PostgreSQL, Prisma, and the initial migration.
 - [ ] Model the Section 5 entities and required indexes.
@@ -135,8 +135,12 @@
 
 - Product-owner decisions in the open-questions document are not yet confirmed.
 - External provider credentials, production domains, and deployment settings are not configured.
-- No application code, migrations, tests, deployment artifacts, package manifest,
-  or app entrypoint have been created.
+- No database migrations, deployment artifacts, or business features have been
+  created; the web/API foundation shells and one API health test now exist.
+- The initial Next.js shell dependency was upgraded from 15.5.6 to 15.5.28
+  after npm audit reported a critical advisory.
+- npm audit still reports transitive postcss and sharp advisories; full
+  remediation requires a breaking Next.js 16 upgrade and is outside this task.
 
 ## Open questions for the product owner
 
