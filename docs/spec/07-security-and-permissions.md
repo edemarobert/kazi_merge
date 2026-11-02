@@ -40,4 +40,3 @@ Work Merge holds personal data about employees, so build for consent and minimal
 - Keep the activity log for audit, but allow deletion of a person's personal details while keeping anonymised task history.
 - Do not use customer data to train AI models without explicit consent.
 
-

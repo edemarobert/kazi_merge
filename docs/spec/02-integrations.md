@@ -79,4 +79,3 @@ interface FilePicker {
 
 Implementations: `WhatsAppChannel`, `SmsChannel`, `EmailChannel`, `InAppChannel`, `GoogleCalendarSync`, `GoogleDriveLinker`. A `NotificationRouter` chooses the channel per user preference and falls back down the list when delivery fails.
 
-

@@ -29,4 +29,3 @@ The model has 14 entities. Every entity except `User` and `Company` carries `com
 
 The `TaskUpdate` plus `ActivityLog` history is also the foundation for the Phase 3 performance insights, so keep it complete and never delete rows from it.
 
-

@@ -116,4 +116,3 @@ Nine modules make up the MVP. Each lists what to build and the checks that must 
 - [ ] Every change to a task, person or role is recorded with actor, time and before and after values.
 - [ ] Log rows cannot be edited or deleted through the API.
 
-
