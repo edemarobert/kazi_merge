@@ -99,6 +99,7 @@ model Company {
   integrationAccounts     IntegrationAccount[]
   activityLogs            ActivityLog[]
   sessions                 Session[]
+  invites                  Invite[]
 }
 
 model User {
@@ -117,6 +118,8 @@ model User {
   integrationAccounts     IntegrationAccount[]
   activityLogs            ActivityLog[]            @relation("ActivityActor")
   sessions                 Session[]
+  sentInvites              Invite[]                @relation("InviteSender")
+  receivedInvites         Invite[]                @relation("InviteRecipient")
 }
 
 model Session {
@@ -135,6 +138,26 @@ model Session {
   @@index([companyId, userId])
   @@index([expiresAt])
   @@map("sessions")
+}
+
+model Invite {
+  id            String           @id @default(uuid()) @db.Uuid
+  companyId     String           @map("company_id") @db.Uuid
+  inviterUserId String           @map("inviter_user_id") @db.Uuid
+  inviteeUserId String           @map("invitee_user_id") @db.Uuid
+  role          MembershipRole
+  tokenHash     String           @unique @map("token_hash")
+  expiresAt     DateTime         @map("expires_at") @db.Timestamptz(3)
+  acceptedAt    DateTime?        @map("accepted_at") @db.Timestamptz(3)
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  inviter User    @relation("InviteSender", fields: [inviterUserId], references: [id], onDelete: Restrict)
+  invitee User    @relation("InviteRecipient", fields: [inviteeUserId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, inviteeUserId])
+  @@index([expiresAt])
+  @@map("invites")
 }
 
 model Membership {

@@ -2,7 +2,7 @@
 
 ## Current task
 
-- Implement invitations and invite acceptance.
+- Build employee directory and profile views.
 
 ## Milestones and tasks
 
@@ -24,7 +24,7 @@
 - [x] Add Google sign-in adapter and flow.
 - [x] Add phone OTP and email-link adapter contracts and flows.
 - [x] Implement company creation and the 30-day trial.
-- [ ] Implement invitations and invite acceptance.
+- [x] Implement invitations and invite acceptance.
 - [ ] Build employee directory and profile views.
 - [ ] Build departments, teams, and reporting lines.
 - [ ] Build CSV import with preview and per-row errors.

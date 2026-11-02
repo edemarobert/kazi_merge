@@ -14,6 +14,7 @@ const companyModels = new Set([
   "NotificationPreference",
   "IntegrationAccount",
   "ActivityLog",
+  "Invite",
 ]);
 
 type QueryArgs = {
