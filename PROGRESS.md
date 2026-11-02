@@ -2,7 +2,7 @@
 
 ## Current task
 
-- [ ] Configure TypeScript, formatting, linting, and test runners.
+- [ ] Configure PostgreSQL, Prisma, and the initial migration.
 
 ## Milestones and tasks
 
@@ -10,7 +10,7 @@
 
 - [x] Confirm repository structure and local development commands.
 - [x] Create the web app and API modular-monolith shells.
-- [ ] Configure TypeScript, formatting, linting, and test runners.
+- [x] Configure TypeScript, formatting, linting, and test runners.
 - [ ] Configure PostgreSQL, Prisma, and the initial migration.
 - [ ] Model the Section 5 entities and required indexes.
 - [ ] Add company-scoping context and query guards.
@@ -141,6 +141,9 @@
   after npm audit reported a critical advisory.
 - npm audit still reports transitive postcss and sharp advisories; full
   remediation requires a breaking Next.js 16 upgrade and is outside this task.
+- The Next.js build reports that the Next.js ESLint plugin is not detected in
+  the flat ESLint configuration; this is a non-blocking warning to revisit
+  when Next-specific lint rules are needed.
 
 ## Open questions for the product owner
 
