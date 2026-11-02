@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { getCompanyId, requireCompanyId } from "../context/company-context.js";
+import { requireCompanyId } from "../context/company-context.js";
 
 const companyModels = new Set([
   "Membership",
@@ -61,9 +61,10 @@ export function createPrismaClient() {
     query: {
       $allModels: {
         async $allOperations({ model, operation, args, query }) {
-          if (!companyModels.has(model) || !getCompanyId()) {
+          if (!companyModels.has(model)) {
             return query(args);
           }
+          requireCompanyId();
 
           const scopedArgs = { ...(args as QueryArgs) };
           if (
