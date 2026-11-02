@@ -2,7 +2,7 @@
 
 ## Current task
 
-- Add phone OTP and email-link adapter contracts and flows.
+- Implement company creation and the 30-day trial.
 
 ## Milestones and tasks
 
@@ -22,7 +22,7 @@
 
 - [x] Implement session and identity foundations.
 - [x] Add Google sign-in adapter and flow.
-- [ ] Add phone OTP and email-link adapter contracts and flows.
+- [x] Add phone OTP and email-link adapter contracts and flows.
 - [ ] Implement company creation and the 30-day trial.
 - [ ] Implement invitations and invite acceptance.
 - [ ] Build employee directory and profile views.
