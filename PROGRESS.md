@@ -27,8 +27,8 @@
 - [x] Implement invitations and invite acceptance.
 - [x] Build employee directory and profile views.
 - [x] Build departments, teams, and reporting lines.
-- [ ] Build CSV import with preview and per-row errors.
-- [ ] Implement role checks across account and people routes.
+- [x] Build CSV import with preview and per-row errors.
+- [x] Implement role checks across account and people routes.
 - [ ] Verify M1–M3 acceptance criteria.
 
 ### Milestone 2 — Tasks, conversation, and activity

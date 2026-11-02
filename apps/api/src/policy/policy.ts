@@ -11,6 +11,8 @@ export type PolicyAction =
   | "people.profile.edit"
   | "people.profile.remove"
   | "people.import"
+  | "people.organization.view"
+  | "people.manager.change"
   | "people.role.change"
   | "tasks.create"
   | "tasks.assign"
@@ -136,6 +138,7 @@ export async function can(
   }
   if (facts.role === MembershipRole.manager) {
     return (
+      (action === "people.manager.change" && facts.isOwnTeam) ||
       (action === "people.invite.employee" && facts.isOwnTeam) ||
       (action === "people.profile.view.all" && facts.isOwnTeam) ||
       (action === "people.profile.view" && facts.isOwnTeam) ||

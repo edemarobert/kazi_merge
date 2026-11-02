@@ -46,6 +46,7 @@ export function createPeopleRouter() {
 
   router.get("/organization", async (_request, response, next) => {
     try {
+      await requirePolicy("people.organization.view");
       response.json({ departments: await listOrganization(organizationStore) });
     } catch (error) {
       next(error);
@@ -53,6 +54,7 @@ export function createPeopleRouter() {
   });
 
   router.post("/import/preview", async (request, response) => {
+    await requirePolicy("people.import");
     const csv = typeof request.body?.csv === "string" ? request.body.csv : "";
     response.json(previewEmployeeCsv(csv));
   });
@@ -81,7 +83,7 @@ export function createPeopleRouter() {
 
   router.patch("/:employeeId/manager", async (request, response, next) => {
     try {
-      await requirePolicy("people.profile.edit", {
+      await requirePolicy("people.manager.change", {
         targetEmployeeId: request.params.employeeId,
       });
       const managerId =
