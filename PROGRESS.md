@@ -2,8 +2,7 @@
 
 ## Current task
 
-- [x] Configure PostgreSQL, Prisma, and the initial migration.
-- [ ] Model the Section 5 entities and required indexes.
+- [ ] Add company-scoping context and query guards.
 
 ## Milestones and tasks
 
@@ -12,8 +11,8 @@
 - [x] Confirm repository structure and local development commands.
 - [x] Create the web app and API modular-monolith shells.
 - [x] Configure TypeScript, formatting, linting, and test runners.
-- [ ] Configure PostgreSQL, Prisma, and the initial migration.
-- [ ] Model the Section 5 entities and required indexes.
+- [x] Configure PostgreSQL, Prisma, and the initial migration.
+- [x] Model the Section 5 entities and required indexes.
 - [ ] Add company-scoping context and query guards.
 - [ ] Add the shared role-policy module skeleton.
 - [ ] Add two-company seed data and cross-company isolation tests.
@@ -147,6 +146,8 @@
   when Next-specific lint rules are needed.
 - Local PostgreSQL is not running in this environment, so the empty migration
   baseline was generated and validated but not applied to a database.
+- The Section 5 migration is generated and validated, but cannot be applied
+  locally until PostgreSQL connection details are available.
 
 ## Open questions for the product owner
 

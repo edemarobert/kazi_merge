@@ -6,3 +6,379 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum CompanyPlan {
+  trial
+  paid
+}
+
+enum MembershipRole {
+  owner
+  manager
+  employee
+}
+
+enum MembershipStatus {
+  invited
+  active
+  suspended
+}
+
+enum EmployeeStatus {
+  active
+  inactive
+}
+
+enum TaskPriority {
+  low
+  medium
+  high
+}
+
+enum TaskStatus {
+  todo
+  in_progress
+  blocked
+  done
+}
+
+enum TaskSource {
+  app
+  whatsapp
+}
+
+enum TaskUpdateKind {
+  comment
+  status_change
+  system
+}
+
+enum MessageChannel {
+  app
+  whatsapp
+}
+
+enum AttachmentKind {
+  upload
+  drive_link
+}
+
+enum NotificationStatus {
+  queued
+  sent
+  delivered
+  failed
+}
+
+enum IntegrationProvider {
+  google
+  whatsapp
+}
+
+model Company {
+  id          String      @id @default(uuid()) @db.Uuid
+  name        String
+  industry    String?
+  sizeBand    String?     @map("size_band")
+  timezone    String      @default("Africa/Kampala")
+  plan        CompanyPlan @default(trial)
+  trialEndsAt DateTime?   @map("trial_ends_at") @db.Timestamptz(3)
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  memberships             Membership[]
+  employees               Employee[]
+  departments             Department[]
+  teams                   Team[]
+  teamMembers             TeamMember[]
+  tasks                   Task[]
+  taskUpdates             TaskUpdate[]
+  attachments             Attachment[]
+  notifications           Notification[]
+  notificationPreferences NotificationPreference[]
+  integrationAccounts     IntegrationAccount[]
+  activityLogs            ActivityLog[]
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String?  @unique
+  phoneE164 String?  @map("phone_e164")
+  googleSub String?  @unique @map("google_sub")
+  name      String
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  memberships             Membership[]
+  notifications           Notification[]           @relation("NotificationRecipient")
+  notificationPreferences NotificationPreference[]
+  integrationAccounts     IntegrationAccount[]
+  activityLogs            ActivityLog[]            @relation("ActivityActor")
+}
+
+model Membership {
+  id        String           @id @default(uuid()) @db.Uuid
+  companyId String           @map("company_id") @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  role      MembershipRole
+  status    MembershipStatus @default(invited)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employee Employee?
+
+  @@unique([id, companyId])
+  @@unique([companyId, userId])
+  @@index([companyId, role, status])
+  @@map("memberships")
+}
+
+model Employee {
+  id               String         @id @default(uuid()) @db.Uuid
+  companyId        String         @map("company_id") @db.Uuid
+  membershipId     String         @unique @map("membership_id") @db.Uuid
+  jobTitle         String?        @map("job_title")
+  departmentId     String?        @map("department_id") @db.Uuid
+  managerId        String?        @map("manager_id") @db.Uuid
+  startDate        DateTime?      @map("start_date") @db.Date
+  phoneE164        String?        @map("phone_e164")
+  emergencyContact Json?          @map("emergency_contact")
+  status           EmployeeStatus @default(active)
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime?      @map("deleted_at") @db.Timestamptz(3)
+
+  company           Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  membership        Membership   @relation(fields: [membershipId, companyId], references: [id, companyId], onDelete: Cascade)
+  department        Department?  @relation("DepartmentEmployees", fields: [departmentId, companyId], references: [id, companyId], onDelete: Restrict)
+  manager           Employee?    @relation("EmployeeManager", fields: [managerId, companyId], references: [id, companyId], onDelete: Restrict)
+  directReports     Employee[]   @relation("EmployeeManager")
+  teamMembers       TeamMember[]
+  ledTeams          Team[]       @relation("TeamLead")
+  headedDepartments Department[] @relation("DepartmentHead")
+  assignedTasks     Task[]       @relation("TaskAssignee")
+  createdTasks      Task[]       @relation("TaskCreator")
+  taskUpdates       TaskUpdate[]
+
+  @@unique([id, companyId])
+  @@unique([membershipId, companyId])
+  @@index([companyId, departmentId])
+  @@index([companyId, managerId])
+  @@map("employees")
+}
+
+model Department {
+  id             String   @id @default(uuid()) @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  name           String
+  headEmployeeId String?  @map("head_employee_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  head      Employee?  @relation("DepartmentHead", fields: [headEmployeeId, companyId], references: [id, companyId], onDelete: Restrict)
+  employees Employee[] @relation("DepartmentEmployees")
+  teams     Team[]
+
+  @@unique([id, companyId])
+  @@unique([companyId, name])
+  @@map("departments")
+}
+
+model Team {
+  id             String   @id @default(uuid()) @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  name           String
+  departmentId   String   @map("department_id") @db.Uuid
+  leadEmployeeId String   @map("lead_employee_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company    Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department Department   @relation(fields: [departmentId, companyId], references: [id, companyId], onDelete: Restrict)
+  lead       Employee     @relation("TeamLead", fields: [leadEmployeeId, companyId], references: [id, companyId], onDelete: Restrict)
+  members    TeamMember[]
+  tasks      Task[]
+
+  @@unique([id, companyId])
+  @@unique([companyId, name])
+  @@index([companyId, departmentId])
+  @@map("teams")
+}
+
+model TeamMember {
+  id         String   @id @default(uuid()) @db.Uuid
+  companyId  String   @map("company_id") @db.Uuid
+  teamId     String   @map("team_id") @db.Uuid
+  employeeId String   @map("employee_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  team     Team     @relation(fields: [teamId, companyId], references: [id, companyId], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId, companyId], references: [id, companyId], onDelete: Cascade)
+
+  @@unique([companyId, teamId, employeeId])
+  @@index([companyId, employeeId])
+  @@map("team_members")
+}
+
+model Task {
+  id                  String       @id @default(uuid()) @db.Uuid
+  companyId           String       @map("company_id") @db.Uuid
+  title               String
+  description         String?
+  assigneeEmployeeId  String       @map("assignee_employee_id") @db.Uuid
+  createdByEmployeeId String       @map("created_by_employee_id") @db.Uuid
+  teamId              String?      @map("team_id") @db.Uuid
+  priority            TaskPriority @default(medium)
+  status              TaskStatus   @default(todo)
+  dueAt               DateTime?    @map("due_at") @db.Timestamptz(3)
+  completedAt         DateTime?    @map("completed_at") @db.Timestamptz(3)
+  blockedReason       String?      @map("blocked_reason")
+  source              TaskSource   @default(app)
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt           DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  assignee      Employee       @relation("TaskAssignee", fields: [assigneeEmployeeId, companyId], references: [id, companyId], onDelete: Restrict)
+  createdBy     Employee       @relation("TaskCreator", fields: [createdByEmployeeId, companyId], references: [id, companyId], onDelete: Restrict)
+  team          Team?          @relation(fields: [teamId, companyId], references: [id, companyId], onDelete: Restrict)
+  updates       TaskUpdate[]
+  notifications Notification[]
+
+  @@unique([id, companyId])
+  @@index([companyId, assigneeEmployeeId, status, dueAt])
+  @@index([companyId, teamId, status])
+  @@map("tasks")
+}
+
+model TaskUpdate {
+  id               String         @id @default(uuid()) @db.Uuid
+  companyId        String         @map("company_id") @db.Uuid
+  taskId           String         @map("task_id") @db.Uuid
+  authorEmployeeId String         @map("author_employee_id") @db.Uuid
+  kind             TaskUpdateKind
+  body             String
+  channel          MessageChannel @default(app)
+  editedAt         DateTime?      @map("edited_at") @db.Timestamptz(3)
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  task        Task         @relation(fields: [taskId, companyId], references: [id, companyId], onDelete: Restrict)
+  author      Employee     @relation(fields: [authorEmployeeId, companyId], references: [id, companyId], onDelete: Restrict)
+  attachments Attachment[]
+
+  @@unique([id, companyId])
+  @@index([companyId, taskId, createdAt])
+  @@map("task_updates")
+}
+
+model Attachment {
+  id           String         @id @default(uuid()) @db.Uuid
+  companyId    String         @map("company_id") @db.Uuid
+  taskUpdateId String         @map("task_update_id") @db.Uuid
+  kind         AttachmentKind
+  name         String
+  url          String?
+  storageKey   String?        @map("storage_key")
+  driveFileId  String?        @map("drive_file_id")
+  mimeType     String?        @map("mime_type")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  taskUpdate TaskUpdate @relation(fields: [taskUpdateId, companyId], references: [id, companyId], onDelete: Restrict)
+
+  @@unique([id, companyId])
+  @@index([companyId, taskUpdateId])
+  @@map("attachments")
+}
+
+model Notification {
+  id              String             @id @default(uuid()) @db.Uuid
+  companyId       String             @map("company_id") @db.Uuid
+  recipientUserId String             @map("recipient_user_id") @db.Uuid
+  type            String
+  taskId          String?            @map("task_id") @db.Uuid
+  channel         String
+  template        String
+  status          NotificationStatus @default(queued)
+  error           String?
+  sentAt          DateTime?          @map("sent_at") @db.Timestamptz(3)
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  recipient User    @relation("NotificationRecipient", fields: [recipientUserId], references: [id], onDelete: Restrict)
+  task      Task?   @relation(fields: [taskId, companyId], references: [id, companyId], onDelete: Restrict)
+
+  @@unique([id, companyId])
+  @@index([companyId, recipientUserId, status])
+  @@index([companyId, taskId])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id              String   @id @default(uuid()) @db.Uuid
+  companyId       String   @map("company_id") @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  whatsappEnabled Boolean  @default(true) @map("whatsapp_enabled")
+  smsEnabled      Boolean  @default(true) @map("sms_enabled")
+  emailEnabled    Boolean  @default(true) @map("email_enabled")
+  digestTime      String?  @map("digest_time")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@map("notification_preferences")
+}
+
+model IntegrationAccount {
+  id                      String              @id @default(uuid()) @db.Uuid
+  companyId               String              @map("company_id") @db.Uuid
+  userId                  String              @map("user_id") @db.Uuid
+  provider                IntegrationProvider
+  externalId              String              @map("external_id")
+  encryptedToken          String?             @map("encrypted_token")
+  scopes                  String[]
+  status                  String
+  whatsappWindowExpiresAt DateTime?           @map("whatsapp_window_expires_at") @db.Timestamptz(3)
+  createdAt               DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([id, companyId])
+  @@unique([companyId, provider, externalId])
+  @@index([provider, externalId])
+  @@map("integration_accounts")
+}
+
+model ActivityLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  actorUserId String   @map("actor_user_id") @db.Uuid
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id") @db.Uuid
+  metadata    Json
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  actor   User    @relation("ActivityActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([companyId, entityType, entityId, createdAt])
+  @@index([companyId, actorUserId, createdAt])
+  @@map("activity_logs")
+}
