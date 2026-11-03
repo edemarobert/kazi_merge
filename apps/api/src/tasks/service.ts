@@ -72,6 +72,51 @@ export type TaskStatusChange = {
   blockedReason?: unknown;
 };
 
+export type TaskListFilters = {
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  overdue?: boolean;
+  assigneeEmployeeId?: string;
+};
+
+export function parseTaskListFilters(
+  query: Record<string, unknown>,
+): { filters: TaskListFilters } | { error: string } {
+  const filters: TaskListFilters = {};
+  if (query.status !== undefined) {
+    const status = Object.values(TaskStatus).find((value) => value === query.status);
+    if (!status) {
+      return { error: "status must be todo, in_progress, blocked, or done." };
+    }
+    filters.status = status;
+  }
+  if (query.priority !== undefined) {
+    const priority = Object.values(TaskPriority).find(
+      (value) => value === query.priority,
+    );
+    if (!priority) {
+      return { error: "priority must be low, medium, or high." };
+    }
+    filters.priority = priority;
+  }
+  if (query.overdue !== undefined) {
+    if (query.overdue !== "true" && query.overdue !== "false") {
+      return { error: "overdue must be true or false." };
+    }
+    filters.overdue = query.overdue === "true";
+  }
+  if (query.assigneeEmployeeId !== undefined) {
+    if (
+      typeof query.assigneeEmployeeId !== "string" ||
+      !query.assigneeEmployeeId.trim()
+    ) {
+      return { error: "assigneeEmployeeId must be a non-empty string." };
+    }
+    filters.assigneeEmployeeId = query.assigneeEmployeeId.trim();
+  }
+  return { filters };
+}
+
 export function validateStatusChange({
   status,
   blockedReason,

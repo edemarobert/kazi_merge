@@ -1,4 +1,4 @@
-import { Prisma, TaskPriority, TaskStatus, TaskUpdateKind } from "@prisma/client";
+import { Prisma, TaskStatus, TaskUpdateKind } from "@prisma/client";
 import { Router } from "express";
 import { getActorUserId, requireCompanyId } from "../context/company-context.js";
 import { prisma } from "../db/prisma.js";
@@ -8,6 +8,7 @@ import {
   isOverdue,
   normalizeStatusChange,
   parseTaskCreationInput,
+  parseTaskListFilters,
   validateStatusChange,
 } from "./service.js";
 
@@ -24,6 +25,10 @@ const taskInclude = {
   },
   team: { select: { id: true, name: true } },
 } satisfies Prisma.TaskInclude;
+
+function parseStatus(value: unknown): TaskStatus | undefined {
+  return Object.values(TaskStatus).find((status) => status === value);
+}
 
 function actorId(): string {
   const userId = getActorUserId();
@@ -66,30 +71,30 @@ async function writeActivity(
   });
 }
 
-function parsePriority(value: unknown): TaskPriority | undefined {
-  return Object.values(TaskPriority).find((priority) => priority === value);
-}
-
-function parseStatus(value: unknown): TaskStatus | undefined {
-  return Object.values(TaskStatus).find((status) => status === value);
-}
-
 export function createTasksRouter() {
   const router = Router();
 
   router.get("/", async (request, response, next) => {
     try {
+      const parsedFilters = parseTaskListFilters(request.query);
+      if ("error" in parsedFilters) {
+        response.status(400).json({
+          code: "invalid_task_filter",
+          message: parsedFilters.error,
+        });
+        return;
+      }
+      const { filters } = parsedFilters;
       const tasks = await prisma.task.findMany({
         where: {
           deletedAt: null,
-          ...(parseStatus(request.query.status)
-            ? { status: parseStatus(request.query.status) }
+          ...(filters.status ? { status: filters.status } : {}),
+          ...(filters.priority ? { priority: filters.priority } : {}),
+          ...(filters.assigneeEmployeeId
+            ? { assigneeEmployeeId: filters.assigneeEmployeeId }
             : {}),
-          ...(parsePriority(request.query.priority)
-            ? { priority: parsePriority(request.query.priority) }
-            : {}),
-          ...(typeof request.query.assigneeEmployeeId === "string"
-            ? { assigneeEmployeeId: request.query.assigneeEmployeeId }
+          ...(filters.overdue
+            ? { dueAt: { lt: new Date() }, status: { not: TaskStatus.done } }
             : {}),
         },
         include: taskInclude,

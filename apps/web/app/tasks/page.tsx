@@ -19,11 +19,23 @@ const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [status, setStatus] = useState("");
+  const [priority, setPriority] = useState("");
+  const [overdueOnly, setOverdueOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch(`${apiBase}/api/v1/tasks`, { credentials: "include" })
+    const query = new URLSearchParams();
+    if (status) query.set("status", status);
+    if (priority) query.set("priority", priority);
+    if (overdueOnly) query.set("overdue", "true");
+    const queryString = query.toString();
+    setLoading(true);
+    setError(false);
+    fetch(`${apiBase}/api/v1/tasks${queryString ? `?${queryString}` : ""}`, {
+      credentials: "include",
+    })
       .then(async (response) => {
         if (!response.ok) throw new Error("Tasks unavailable.");
         return (await response.json()) as { tasks: Task[] };
@@ -31,7 +43,7 @@ export default function TasksPage() {
       .then((data) => setTasks(data.tasks))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, []);
+  }, [overdueOnly, priority, status]);
 
   return (
     <AppShell>
@@ -50,6 +62,38 @@ export default function TasksPage() {
         </header>
         {loading && <p role="status">Loading tasks...</p>}
         {error && <p role="alert">Task data is unavailable. Please try again.</p>}
+        <section className="panel task-filters" aria-label="Task filters">
+          <label>
+            Status
+            <select value={status} onChange={(event) => setStatus(event.target.value)}>
+              <option value="">All statuses</option>
+              <option value="todo">To do</option>
+              <option value="in_progress">In progress</option>
+              <option value="blocked">Blocked</option>
+              <option value="done">Done</option>
+            </select>
+          </label>
+          <label>
+            Priority
+            <select
+              value={priority}
+              onChange={(event) => setPriority(event.target.value)}
+            >
+              <option value="">All priorities</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={overdueOnly}
+              onChange={(event) => setOverdueOnly(event.target.checked)}
+            />
+            Overdue only
+          </label>
+        </section>
         <section className="panel" aria-label="Task list">
           {!loading && tasks.length === 0 && !error ? (
             <p>No tasks are visible yet.</p>

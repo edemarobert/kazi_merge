@@ -2,10 +2,10 @@
 
 ## Current task
 
-- Milestone 2, Task 3 is complete and verified: initial task list and task
-  detail views.
+- Milestone 2, Task 4 is complete and verified: status/priority filters and
+  overdue indicators.
 - Awaiting explicit product-owner approval before beginning Milestone 2,
-  Task 4 (status/priority filters and overdue indicators).
+  Task 5 (task conversation thread).
 
 ## Active remediation
 
@@ -85,7 +85,7 @@
 - [x] Implement task creation, assignment, priorities, and due dates.
 - [x] Implement task status transitions and blocked-reason validation.
 - [x] Build the initial task list and task detail views.
-- [ ] Add status/priority filters and overdue indicators to the API/list.
+- [x] Add status/priority filters and overdue indicators to the API/list.
 - [ ] Implement the task conversation thread.
 - [ ] Add comments, status events, and append-only activity rows.
 - [ ] Add mentions and uploaded attachments.
@@ -114,6 +114,16 @@
   data, show loading/error/empty states, expose task metadata and assignment
   details, link list rows to task details, and visibly flag overdue tasks.
 - **Task 3 validation:** API tests pass (34 passed, 1 skipped); lint,
+  typecheck, formatting, problem checks, and production build pass. The build
+  retains non-blocking existing warnings for the Next.js ESLint plugin and
+  autoprefixer compatibility. The PostgreSQL isolation test remains skipped
+  because `DATABASE_URL` is unavailable.
+- **Task 4 status:** Complete. The task API validates status, priority,
+  overdue, and assignee filters, applies them within the existing company
+  scope, and rejects invalid filter values with HTTP 400. The task list now
+  provides status, priority, and overdue-only controls and reloads filtered
+  results from the API.
+- **Task 4 validation:** API tests pass (35 passed, 1 skipped); lint,
   typecheck, formatting, problem checks, and production build pass. The build
   retains non-blocking existing warnings for the Next.js ESLint plugin and
   autoprefixer compatibility. The PostgreSQL isolation test remains skipped

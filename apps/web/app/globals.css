@@ -539,6 +539,18 @@ h2 {
 .detail-grid dd {
   margin: 4px 0 0;
 }
+
+.task-filters {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.checkbox-label {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
 .activity-dot {
   width: 10px;
   height: 10px;

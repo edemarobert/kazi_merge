@@ -5,6 +5,7 @@ import {
   isOverdue,
   normalizeStatusChange,
   parseTaskCreationInput,
+  parseTaskListFilters,
   validateStatusChange,
 } from "../src/tasks/service.js";
 
@@ -47,6 +48,34 @@ test("task creation input rejects invalid assignment fields", () => {
     }),
     { error: "dueAt must be a valid ISO date." },
   );
+});
+
+test("task list filters validate status, priority, and overdue values", () => {
+  assert.deepEqual(
+    parseTaskListFilters({
+      status: "blocked",
+      priority: "high",
+      overdue: "true",
+      assigneeEmployeeId: " employee-1 ",
+    }),
+    {
+      filters: {
+        status: TaskStatus.blocked,
+        priority: "high",
+        overdue: true,
+        assigneeEmployeeId: "employee-1",
+      },
+    },
+  );
+  assert.deepEqual(parseTaskListFilters({ status: "unknown" }), {
+    error: "status must be todo, in_progress, blocked, or done.",
+  });
+  assert.deepEqual(parseTaskListFilters({ priority: "urgent" }), {
+    error: "priority must be low, medium, or high.",
+  });
+  assert.deepEqual(parseTaskListFilters({ overdue: "yes" }), {
+    error: "overdue must be true or false.",
+  });
 });
 
 test("blocked status requires a non-empty reason", () => {
