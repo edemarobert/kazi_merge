@@ -19,6 +19,7 @@ const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -28,7 +29,8 @@ export default function TasksPage() {
         return (await response.json()) as { tasks: Task[] };
       })
       .then((data) => setTasks(data.tasks))
-      .catch(() => setError(true));
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -46,11 +48,12 @@ export default function TasksPage() {
             New task
           </Link>
         </header>
-        {error && <p role="alert">Task data is unavailable.</p>}
+        {loading && <p role="status">Loading tasks...</p>}
+        {error && <p role="alert">Task data is unavailable. Please try again.</p>}
         <section className="panel" aria-label="Task list">
-          {tasks.length === 0 && !error ? (
+          {!loading && tasks.length === 0 && !error ? (
             <p>No tasks are visible yet.</p>
-          ) : (
+          ) : !loading && !error ? (
             <ul className="activity-list">
               {tasks.map((task) => (
                 <li key={task.id}>
@@ -60,18 +63,21 @@ export default function TasksPage() {
                       <strong>{task.title}</strong>
                     </Link>
                     <small>
-                      {task.assignee.membership.user.name} · {task.status.replace("_", " ")}
+                      {task.assignee.membership.user.name} ·{" "}
+                      {task.status.replace("_", " ")}
                       {task.dueAt
                         ? ` · due ${new Date(task.dueAt).toLocaleDateString()}`
                         : ""}
                       {task.overdue ? " · overdue" : ""}
                     </small>
                   </span>
-                  <span className={`priority priority-${task.priority}`}>{task.priority}</span>
+                  <span className={`priority priority-${task.priority}`}>
+                    {task.priority}
+                  </span>
                 </li>
               ))}
             </ul>
-          )}
+          ) : null}
         </section>
       </div>
     </AppShell>

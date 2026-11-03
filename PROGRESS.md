@@ -2,10 +2,10 @@
 
 ## Current task
 
-- Milestone 2, Task 2 is complete and verified: status transitions and
-  blocked-reason validation.
+- Milestone 2, Task 3 is complete and verified: initial task list and task
+  detail views.
 - Awaiting explicit product-owner approval before beginning Milestone 2,
-  Task 3 (initial task list and task detail views).
+  Task 4 (status/priority filters and overdue indicators).
 
 ## Active remediation
 
@@ -84,7 +84,7 @@
 
 - [x] Implement task creation, assignment, priorities, and due dates.
 - [x] Implement task status transitions and blocked-reason validation.
-- [ ] Build the initial task list and task detail views.
+- [x] Build the initial task list and task detail views.
 - [ ] Add status/priority filters and overdue indicators to the API/list.
 - [ ] Implement the task conversation thread.
 - [ ] Add comments, status events, and append-only activity rows.
@@ -110,6 +110,14 @@
 - **Task 2 evidence:** Status validation and normalization are covered in
   `apps/api/test/task-service.test.ts`; route-level live database coverage is
   still deferred until PostgreSQL is configured.
+- **Task 3 status:** Complete. The task list and detail pages load scoped API
+  data, show loading/error/empty states, expose task metadata and assignment
+  details, link list rows to task details, and visibly flag overdue tasks.
+- **Task 3 validation:** API tests pass (34 passed, 1 skipped); lint,
+  typecheck, formatting, problem checks, and production build pass. The build
+  retains non-blocking existing warnings for the Next.js ESLint plugin and
+  autoprefixer compatibility. The PostgreSQL isolation test remains skipped
+  because `DATABASE_URL` is unavailable.
 - **Workflow rule:** Complete and verify one task, update this file, then stop
   and wait for explicit approval before starting the next task.
 

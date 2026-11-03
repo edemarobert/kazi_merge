@@ -19,6 +19,9 @@ type Task = {
   priority: "low" | "medium" | "high";
   blockedReason: string | null;
   dueAt: string | null;
+  assignee: { membership: { user: { name: string } } };
+  createdBy: { membership: { user: { name: string } } };
+  team: { id: string; name: string } | null;
   updates: Update[];
 };
 
@@ -35,6 +38,7 @@ export default function TaskDetailPage({
   const [blockedReason, setBlockedReason] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<Task["status"]>("todo");
   const [savingStatus, setSavingStatus] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -47,7 +51,8 @@ export default function TaskDetailPage({
         setTask(data.task);
         setSelectedStatus(data.task.status);
       })
-      .catch(() => setError(true));
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, [taskId]);
 
   async function addComment() {
@@ -92,7 +97,12 @@ export default function TaskDetailPage({
     <AppShell>
       <div className="page">
         <Link href="/tasks">← Tasks</Link>
-        {error && <p role="alert">Task data is unavailable.</p>}
+        {loading && <p role="status">Loading task...</p>}
+        {error && (
+          <p role="alert">
+            Task data is unavailable. Please return to the task list and try again.
+          </p>
+        )}
         {task && (
           <>
             <header className="page-header">
@@ -105,6 +115,39 @@ export default function TaskDetailPage({
                 {task.status.replace("_", " ")}
               </span>
             </header>
+            <section className="panel" aria-label="Task details">
+              <dl className="detail-grid">
+                <div>
+                  <dt>Assignee</dt>
+                  <dd>{task.assignee.membership.user.name}</dd>
+                </div>
+                <div>
+                  <dt>Created by</dt>
+                  <dd>{task.createdBy.membership.user.name}</dd>
+                </div>
+                <div>
+                  <dt>Priority</dt>
+                  <dd>{task.priority}</dd>
+                </div>
+                <div>
+                  <dt>Due</dt>
+                  <dd>
+                    {task.dueAt ? new Date(task.dueAt).toLocaleString() : "No due date"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Team</dt>
+                  <dd>{task.team?.name ?? "No team"}</dd>
+                </div>
+              </dl>
+              {task.dueAt &&
+                task.status !== "done" &&
+                new Date(task.dueAt) < new Date() && (
+                  <p className="callout" role="status">
+                    This task is overdue.
+                  </p>
+                )}
+            </section>
             {task.blockedReason && (
               <p className="callout" role="status">
                 Blocked: {task.blockedReason}
@@ -144,19 +187,23 @@ export default function TaskDetailPage({
                 {savingStatus ? "Saving..." : "Save status"}
               </button>
               <h2>Conversation</h2>
-              <ul className="activity-list">
-                {task.updates.map((update) => (
-                  <li key={update.id}>
-                    <span className="activity-dot primary-dot" />
-                    <span>
-                      <strong>{update.kind.replace("_", " ")}</strong>
-                      <small>
-                        {update.body} · {new Date(update.createdAt).toLocaleString()}
-                      </small>
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              {task.updates.length > 0 ? (
+                <ul className="activity-list">
+                  {task.updates.map((update) => (
+                    <li key={update.id}>
+                      <span className="activity-dot primary-dot" />
+                      <span>
+                        <strong>{update.kind.replace("_", " ")}</strong>
+                        <small>
+                          {update.body} · {new Date(update.createdAt).toLocaleString()}
+                        </small>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No updates yet.</p>
+              )}
               <label>
                 Add a comment
                 <textarea
