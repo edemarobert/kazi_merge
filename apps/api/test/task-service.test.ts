@@ -61,6 +61,20 @@ test("blocked status requires a non-empty reason", () => {
     }),
     null,
   );
+  assert.equal(
+    validateStatusChange({
+      status: TaskStatus.blocked,
+      blockedReason: 42,
+    }),
+    "blockedReason must be text.",
+  );
+  assert.equal(
+    validateStatusChange({
+      status: TaskStatus.blocked,
+      blockedReason: "x".repeat(501),
+    }),
+    "blockedReason must be 500 characters or fewer.",
+  );
 });
 
 test("status normalization clears blocked reasons after unblocking", () => {
@@ -70,6 +84,13 @@ test("status normalization clears blocked reasons after unblocking", () => {
       blockedReason: "old reason",
     }),
     { status: TaskStatus.in_progress, blockedReason: null },
+  );
+  assert.deepEqual(
+    normalizeStatusChange({
+      status: TaskStatus.blocked,
+      blockedReason: "  Waiting for stock  ",
+    }),
+    { status: TaskStatus.blocked, blockedReason: "Waiting for stock" },
   );
 });
 

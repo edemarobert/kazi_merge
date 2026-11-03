@@ -33,6 +33,8 @@ export default function TaskDetailPage({
   const [task, setTask] = useState<Task | null>(null);
   const [comment, setComment] = useState("");
   const [blockedReason, setBlockedReason] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<Task["status"]>("todo");
+  const [savingStatus, setSavingStatus] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -41,7 +43,10 @@ export default function TaskDetailPage({
         if (!response.ok) throw new Error("Task unavailable.");
         return (await response.json()) as { task: Task };
       })
-      .then((data) => setTask(data.task))
+      .then((data) => {
+        setTask(data.task);
+        setSelectedStatus(data.task.status);
+      })
       .catch(() => setError(true));
   }, [taskId]);
 
@@ -64,20 +69,23 @@ export default function TaskDetailPage({
     setComment("");
   }
 
-  async function changeStatus(status: Task["status"]) {
+  async function changeStatus() {
+    setSavingStatus(true);
     const response = await fetch(`${apiBase}/api/v1/tasks/${taskId}/status`, {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, blockedReason }),
+      body: JSON.stringify({ status: selectedStatus, blockedReason }),
     });
     if (!response.ok) {
       setError(true);
+      setSavingStatus(false);
       return;
     }
     const data = (await response.json()) as { task: Task };
     setTask((current) => (current ? { ...current, ...data.task } : data.task));
     setBlockedReason("");
+    setSavingStatus(false);
   }
 
   return (
@@ -106,8 +114,10 @@ export default function TaskDetailPage({
               <label>
                 Update status
                 <select
-                  value={task.status}
-                  onChange={(event) => changeStatus(event.target.value as Task["status"])}
+                  value={selectedStatus}
+                  onChange={(event) =>
+                    setSelectedStatus(event.target.value as Task["status"])
+                  }
                 >
                   <option value="todo">To do</option>
                   <option value="in_progress">In progress</option>
@@ -115,7 +125,7 @@ export default function TaskDetailPage({
                   <option value="done">Done</option>
                 </select>
               </label>
-              {task.status === "blocked" && (
+              {selectedStatus === "blocked" && (
                 <label>
                   Blocked reason
                   <input
@@ -125,6 +135,14 @@ export default function TaskDetailPage({
                   />
                 </label>
               )}
+              <button
+                className="button button-primary"
+                type="button"
+                onClick={changeStatus}
+                disabled={savingStatus || selectedStatus === task.status}
+              >
+                {savingStatus ? "Saving..." : "Save status"}
+              </button>
               <h2>Conversation</h2>
               <ul className="activity-list">
                 {task.updates.map((update) => (
@@ -141,9 +159,16 @@ export default function TaskDetailPage({
               </ul>
               <label>
                 Add a comment
-                <textarea value={comment} onChange={(event) => setComment(event.target.value)} />
+                <textarea
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                />
               </label>
-              <button className="button button-primary" type="button" onClick={addComment}>
+              <button
+                className="button button-primary"
+                type="button"
+                onClick={addComment}
+              >
                 Comment
               </button>
             </section>

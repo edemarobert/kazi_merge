@@ -21,8 +21,7 @@ export type TaskCreationPayload = {
 export function parseTaskCreationInput(
   payload: TaskCreationPayload,
 ): { input: TaskCreationInput } | { error: string } {
-  const title =
-    typeof payload.title === "string" ? payload.title.trim() : "";
+  const title = typeof payload.title === "string" ? payload.title.trim() : "";
   const assigneeEmployeeId =
     typeof payload.assigneeEmployeeId === "string"
       ? payload.assigneeEmployeeId.trim()
@@ -61,8 +60,7 @@ export function parseTaskCreationInput(
           ? payload.description.trim() || null
           : null,
       assigneeEmployeeId,
-      teamId:
-        typeof payload.teamId === "string" ? payload.teamId.trim() || null : null,
+      teamId: typeof payload.teamId === "string" ? payload.teamId.trim() || null : null,
       priority,
       dueAt,
     },
@@ -71,30 +69,44 @@ export function parseTaskCreationInput(
 
 export type TaskStatusChange = {
   status: TaskStatus;
-  blockedReason?: string | null;
+  blockedReason?: unknown;
 };
 
 export function validateStatusChange({
   status,
   blockedReason,
 }: TaskStatusChange): string | null {
-  if (status === TaskStatus.blocked && !blockedReason?.trim()) {
+  if (
+    blockedReason !== undefined &&
+    blockedReason !== null &&
+    typeof blockedReason !== "string"
+  ) {
+    return "blockedReason must be text.";
+  }
+  const reason = typeof blockedReason === "string" ? blockedReason.trim() : "";
+  if (status === TaskStatus.blocked && !reason) {
     return "A blocked task must include a reason.";
+  }
+  if (reason.length > 500) {
+    return "blockedReason must be 500 characters or fewer.";
   }
   return null;
 }
 
-export function normalizeStatusChange({
-  status,
-  blockedReason,
-}: TaskStatusChange): { status: TaskStatus; blockedReason: string | null } {
+export function normalizeStatusChange({ status, blockedReason }: TaskStatusChange): {
+  status: TaskStatus;
+  blockedReason: string | null;
+} {
   const error = validateStatusChange({ status, blockedReason });
   if (error) {
     throw new Error(error);
   }
   return {
     status,
-    blockedReason: status === TaskStatus.blocked ? blockedReason!.trim() : null,
+    blockedReason:
+      status === TaskStatus.blocked && typeof blockedReason === "string"
+        ? blockedReason.trim()
+        : null,
   };
 }
 

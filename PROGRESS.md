@@ -2,10 +2,10 @@
 
 ## Current task
 
-- Milestone 2, Task 1 is complete and verified: task creation, assignment,
-  priorities, and due dates.
+- Milestone 2, Task 2 is complete and verified: status transitions and
+  blocked-reason validation.
 - Awaiting explicit product-owner approval before beginning Milestone 2,
-  Task 2 (status transitions and blocked-reason validation).
+  Task 3 (initial task list and task detail views).
 
 ## Active remediation
 
@@ -15,7 +15,7 @@
 - [x] Enforce owner-only removal and sanitized teammate profiles.
 - [x] Connect CSV import and dashboard UI to scoped API data.
 - [x] Update [MILESTONE_1_REVIEW.md](MILESTONE_1_REVIEW.md) with remediation
-  evidence and remaining gaps.
+      evidence and remaining gaps.
 - [ ] Fix dashboard company lookup and run the live PostgreSQL isolation test.
 
 ## Milestones and tasks
@@ -83,7 +83,7 @@
 ### Milestone 2 — Tasks, conversation, and activity
 
 - [x] Implement task creation, assignment, priorities, and due dates.
-- [ ] Implement task status transitions and blocked-reason validation.
+- [x] Implement task status transitions and blocked-reason validation.
 - [ ] Build the initial task list and task detail views.
 - [ ] Add status/priority filters and overdue indicators to the API/list.
 - [ ] Implement the task conversation thread.
@@ -98,11 +98,17 @@
   text, rejects invalid priorities and dates, requires an active employee in
   the active company, and validates that an optional team includes the
   assignee. Shared policy checks and company-scoped Prisma writes are used.
-- **Validation:** API tests pass (34 passed, 1 skipped); lint, typecheck, and
-  production build pass. The PostgreSQL isolation test remains skipped because
-  `DATABASE_URL` is unavailable.
-- **Task 1 evidence:** Input and date/priority validation are covered in
-  `apps/api/test/task-service.test.ts`. Route-level live database coverage is
+- **Task 2 status:** Complete. Status changes accept the four supported task
+  statuses, require a trimmed reason when moving to Blocked, reject malformed
+  or overlong reasons with HTTP 400, clear stale blocked reasons when leaving
+  Blocked, set completion timestamps for Done, append a status update, and
+  write an activity-log row. The task detail UI now collects a blocked reason
+  before submitting the transition.
+- **Validation:** API tests pass (34 passed, 1 skipped); lint, typecheck,
+  formatting, and production build pass. The PostgreSQL isolation test remains
+  skipped because `DATABASE_URL` is unavailable.
+- **Task 2 evidence:** Status validation and normalization are covered in
+  `apps/api/test/task-service.test.ts`; route-level live database coverage is
   still deferred until PostgreSQL is configured.
 - **Workflow rule:** Complete and verify one task, update this file, then stop
   and wait for explicit approval before starting the next task.

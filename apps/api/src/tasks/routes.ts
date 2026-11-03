@@ -1,14 +1,6 @@
-import {
-  Prisma,
-  TaskPriority,
-  TaskStatus,
-  TaskUpdateKind,
-} from "@prisma/client";
+import { Prisma, TaskPriority, TaskStatus, TaskUpdateKind } from "@prisma/client";
 import { Router } from "express";
-import {
-  getActorUserId,
-  requireCompanyId,
-} from "../context/company-context.js";
+import { getActorUserId, requireCompanyId } from "../context/company-context.js";
 import { prisma } from "../db/prisma.js";
 import { requirePolicy } from "../policy/policy.js";
 import { PolicyDeniedError } from "../policy/policy.js";
@@ -16,14 +8,19 @@ import {
   isOverdue,
   normalizeStatusChange,
   parseTaskCreationInput,
+  validateStatusChange,
 } from "./service.js";
 
 const taskInclude = {
   assignee: {
-    include: { membership: { include: { user: { select: { id: true, name: true } } } } },
+    include: {
+      membership: { include: { user: { select: { id: true, name: true } } } },
+    },
   },
   createdBy: {
-    include: { membership: { include: { user: { select: { id: true, name: true } } } } },
+    include: {
+      membership: { include: { user: { select: { id: true, name: true } } } },
+    },
   },
   team: { select: { id: true, name: true } },
 } satisfies Prisma.TaskInclude;
@@ -217,12 +214,30 @@ export function createTasksRouter() {
         });
         return;
       }
+      const statusValidationError = validateStatusChange({
+        status,
+        blockedReason: request.body?.blockedReason,
+      });
+      if (statusValidationError) {
+        response.status(400).json({
+          code: "invalid_status_change",
+          message: statusValidationError,
+        });
+        return;
+      }
       const existing = await prisma.task.findFirst({
         where: { id: request.params.taskId, deletedAt: null },
-        select: { id: true, status: true, blockedReason: true, assigneeEmployeeId: true },
+        select: {
+          id: true,
+          status: true,
+          blockedReason: true,
+          assigneeEmployeeId: true,
+        },
       });
       if (!existing) {
-        response.status(404).json({ code: "task_not_found", message: "Task not found." });
+        response
+          .status(404)
+          .json({ code: "task_not_found", message: "Task not found." });
         return;
       }
       await requirePolicy("tasks.update", { targetTaskId: existing.id });
@@ -264,7 +279,8 @@ export function createTasksRouter() {
 
   router.post("/:taskId/comments", async (request, response, next) => {
     try {
-      const body = typeof request.body?.body === "string" ? request.body.body.trim() : "";
+      const body =
+        typeof request.body?.body === "string" ? request.body.body.trim() : "";
       if (!body) {
         response.status(400).json({
           code: "invalid_comment",
@@ -277,7 +293,9 @@ export function createTasksRouter() {
         select: { id: true },
       });
       if (!task) {
-        response.status(404).json({ code: "task_not_found", message: "Task not found." });
+        response
+          .status(404)
+          .json({ code: "task_not_found", message: "Task not found." });
         return;
       }
       await requirePolicy("tasks.update", { targetTaskId: task.id });
