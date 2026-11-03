@@ -4,8 +4,50 @@ import { TaskStatus } from "@prisma/client";
 import {
   isOverdue,
   normalizeStatusChange,
+  parseTaskCreationInput,
   validateStatusChange,
 } from "../src/tasks/service.js";
+
+test("task creation input applies safe defaults and trims text", () => {
+  const result = parseTaskCreationInput({
+    title: "  Prepare stock report  ",
+    description: "  Include the weekend count ",
+    assigneeEmployeeId: "employee-1",
+    priority: "high",
+    dueAt: "2026-11-05T09:00:00.000Z",
+  });
+
+  assert.ok("input" in result);
+  if ("input" in result) {
+    assert.deepEqual(result.input, {
+      title: "Prepare stock report",
+      description: "Include the weekend count",
+      assigneeEmployeeId: "employee-1",
+      teamId: null,
+      priority: "high",
+      dueAt: new Date("2026-11-05T09:00:00.000Z"),
+    });
+  }
+});
+
+test("task creation input rejects invalid assignment fields", () => {
+  assert.deepEqual(
+    parseTaskCreationInput({
+      title: "A task",
+      assigneeEmployeeId: "employee-1",
+      priority: "urgent",
+    }),
+    { error: "priority must be low, medium, or high." },
+  );
+  assert.deepEqual(
+    parseTaskCreationInput({
+      title: "A task",
+      assigneeEmployeeId: "employee-1",
+      dueAt: "not-a-date",
+    }),
+    { error: "dueAt must be a valid ISO date." },
+  );
+});
 
 test("blocked status requires a non-empty reason", () => {
   assert.equal(

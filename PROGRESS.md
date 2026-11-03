@@ -2,10 +2,10 @@
 
 ## Current task
 
-- Milestone 2, Task 1 only: implement task creation, assignment, priorities,
-  and due dates.
-- Do not begin another Milestone 2 task until this task is fully verified and
-  the product owner explicitly approves the next task.
+- Milestone 2, Task 1 is complete and verified: task creation, assignment,
+  priorities, and due dates.
+- Awaiting explicit product-owner approval before beginning Milestone 2,
+  Task 2 (status transitions and blocked-reason validation).
 
 ## Active remediation
 
@@ -94,13 +94,16 @@
 
 ### Milestone 2 implementation checkpoint
 
-- **Task 1 status:** The task creation/assignment/priority/due-date slice is
-  implemented and validated. Additional code exists for later Milestone 2
-  tasks, but those tasks are not approved as complete and must not be extended
-  until the product owner approves them.
-- **Validation:** API tests pass (32 passed, 1 skipped); lint, typecheck, and
+- **Task 1 status:** Complete. Task creation validates required fields, trims
+  text, rejects invalid priorities and dates, requires an active employee in
+  the active company, and validates that an optional team includes the
+  assignee. Shared policy checks and company-scoped Prisma writes are used.
+- **Validation:** API tests pass (34 passed, 1 skipped); lint, typecheck, and
   production build pass. The PostgreSQL isolation test remains skipped because
   `DATABASE_URL` is unavailable.
+- **Task 1 evidence:** Input and date/priority validation are covered in
+  `apps/api/test/task-service.test.ts`. Route-level live database coverage is
+  still deferred until PostgreSQL is configured.
 - **Workflow rule:** Complete and verify one task, update this file, then stop
   and wait for explicit approval before starting the next task.
 

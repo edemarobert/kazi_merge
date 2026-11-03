@@ -12,7 +12,11 @@ import {
 import { prisma } from "../db/prisma.js";
 import { requirePolicy } from "../policy/policy.js";
 import { PolicyDeniedError } from "../policy/policy.js";
-import { isOverdue, normalizeStatusChange } from "./service.js";
+import {
+  isOverdue,
+  normalizeStatusChange,
+  parseTaskCreationInput,
+} from "./service.js";
 
 const taskInclude = {
   assignee: {
@@ -73,13 +77,6 @@ function parseStatus(value: unknown): TaskStatus | undefined {
   return Object.values(TaskStatus).find((status) => status === value);
 }
 
-function parseDueAt(value: unknown): Date | null | undefined {
-  if (value === null || value === undefined || value === "") return null;
-  if (typeof value !== "string") return undefined;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : date;
-}
-
 export function createTasksRouter() {
   const router = Router();
 
@@ -118,49 +115,72 @@ export function createTasksRouter() {
 
   router.post("/", async (request, response, next) => {
     try {
-      const title =
-        typeof request.body?.title === "string" ? request.body.title.trim() : "";
-      const assigneeEmployeeId =
-        typeof request.body?.assigneeEmployeeId === "string"
-          ? request.body.assigneeEmployeeId
-          : "";
-      const dueAt = parseDueAt(request.body?.dueAt);
-      const priority = parsePriority(request.body?.priority) ?? TaskPriority.medium;
-      if (!title || !assigneeEmployeeId || dueAt === undefined) {
+      const parsed = parseTaskCreationInput(request.body ?? {});
+      if ("error" in parsed) {
         response.status(400).json({
           code: "invalid_task",
-          message: "title and assigneeEmployeeId are required; dueAt must be a valid date when provided.",
+          message: parsed.error,
         });
         return;
       }
+      const { input } = parsed;
+      const assignee = await prisma.employee.findFirst({
+        where: {
+          id: input.assigneeEmployeeId,
+          status: "active",
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+      if (!assignee) {
+        response.status(400).json({
+          code: "invalid_assignee",
+          message: "The assignee must be an active employee in this company.",
+        });
+        return;
+      }
+      if (input.teamId) {
+        const team = await prisma.team.findFirst({
+          where: {
+            id: input.teamId,
+            members: { some: { employeeId: input.assigneeEmployeeId } },
+          },
+          select: { id: true },
+        });
+        if (!team) {
+          response.status(400).json({
+            code: "invalid_team",
+            message: "The team must exist in this company and include the assignee.",
+          });
+          return;
+        }
+      }
 
-      await requirePolicy("tasks.create", { targetEmployeeId: assigneeEmployeeId });
-      if (assigneeEmployeeId !== (await actorEmployeeId())) {
+      await requirePolicy("tasks.create", {
+        targetEmployeeId: input.assigneeEmployeeId,
+      });
+      if (input.assigneeEmployeeId !== (await actorEmployeeId())) {
         await requirePolicy("tasks.assign", {
-          targetEmployeeId: assigneeEmployeeId,
+          targetEmployeeId: input.assigneeEmployeeId,
         });
       }
       const createdByEmployeeId = await actorEmployeeId();
       const task = await prisma.task.create({
         data: {
           companyId: requireCompanyId(),
-          title,
-          description:
-            typeof request.body?.description === "string"
-              ? request.body.description.trim() || null
-              : null,
-          assigneeEmployeeId,
+          title: input.title,
+          description: input.description,
+          assigneeEmployeeId: input.assigneeEmployeeId,
           createdByEmployeeId,
-          teamId:
-            typeof request.body?.teamId === "string" ? request.body.teamId : null,
-          priority,
-          dueAt,
+          teamId: input.teamId,
+          priority: input.priority,
+          dueAt: input.dueAt,
         },
         include: taskInclude,
       });
       await writeActivity("task.created", task.id, {
         title: task.title,
-        assigneeEmployeeId,
+        assigneeEmployeeId: input.assigneeEmployeeId,
       });
       response.status(201).json({ task });
     } catch (error) {
