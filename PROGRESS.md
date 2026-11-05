@@ -170,7 +170,7 @@
 - [x] Implement Google Sheets import.
 - [x] Reuse CSV preview and per-row validation for Sheets.
 - [x] Test integration-disabled behavior and narrow scopes.
-- [ ] Verify M8 acceptance criteria.
+- [x] Verify M8 acceptance criteria.
 
 ### Milestone 7 — Hardening and pilot
 
