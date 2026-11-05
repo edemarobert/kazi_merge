@@ -35,6 +35,7 @@ const emptyData: DashboardData = {
 
 export default function HomePage() {
   const [data, setData] = useState<DashboardData>(emptyData);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -47,7 +48,8 @@ export default function HomePage() {
         return (await response.json()) as DashboardData;
       })
       .then(setData)
-      .catch(() => setError(true));
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, []);
 
   const maxOpenTasks = Math.max(1, ...data.workload.map((person) => person.open));
@@ -68,6 +70,7 @@ export default function HomePage() {
             </div>
           )}
         </header>
+        {loading && <p role="status">Loading dashboard...</p>}
         {error && <p role="alert">Dashboard data is unavailable.</p>}
 
         <section
@@ -111,9 +114,17 @@ export default function HomePage() {
               <Link href="/people">{translations.dashboard.viewPeople}</Link>
             </div>
             <div className="workload-list">
-              {data.workload.map((person) => (
-                <WorkloadRow key={person.id} {...person} maxOpenTasks={maxOpenTasks} />
-              ))}
+              {data.workload.length > 0 ? (
+                data.workload.map((person) => (
+                  <WorkloadRow
+                    key={person.id}
+                    {...person}
+                    maxOpenTasks={maxOpenTasks}
+                  />
+                ))
+              ) : (
+                <p>No workload data yet.</p>
+              )}
             </div>
           </section>
           <section className="panel activity-panel">
@@ -125,17 +136,21 @@ export default function HomePage() {
               <Link href="/activity">{translations.dashboard.viewAll}</Link>
             </div>
             <ul className="activity-list">
-              {data.activity.map((item) => (
-                <li key={item.id}>
-                  <span className="activity-dot primary-dot" />
-                  <span>
-                    <strong>
-                      {item.actorName} - {item.action}
-                    </strong>
-                    <small>{new Date(item.createdAt).toLocaleString()}</small>
-                  </span>
-                </li>
-              ))}
+              {data.activity.length > 0 ? (
+                data.activity.map((item) => (
+                  <li key={item.id}>
+                    <span className="activity-dot primary-dot" />
+                    <span>
+                      <strong>
+                        {item.actorName} - {item.action}
+                      </strong>
+                      <small>{new Date(item.createdAt).toLocaleString()}</small>
+                    </span>
+                  </li>
+                ))
+              ) : (
+                <li>No recent activity yet.</li>
+              )}
             </ul>
           </section>
         </div>

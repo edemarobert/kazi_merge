@@ -2,9 +2,9 @@
 
 ## Current task
 
-- Milestone 3, Tasks 1–7 are complete and verified.
+- Milestone 3, Tasks 1–8 are complete and verified.
 - Awaiting explicit product-owner approval before beginning Milestone 3,
-  Task 8 (loading, empty, and error states).
+  Task 9 (benchmark 50 employees and 2,000 tasks).
 
 ## Active remediation
 
@@ -111,7 +111,7 @@
 - [x] Calculate 30-day on-time completion rate.
 - [x] Add the recent activity feed.
 - [x] Link dashboard counts to filtered task lists.
-- [ ] Add loading, empty, and error states.
+- [x] Add loading, empty, and error states.
 - [ ] Benchmark 50 employees and 2,000 tasks.
 - [ ] Verify M6 acceptance criteria.
 
