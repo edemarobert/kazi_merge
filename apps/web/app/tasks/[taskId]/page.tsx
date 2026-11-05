@@ -9,6 +9,8 @@ type Update = {
   body: string;
   kind: "comment" | "status_change" | "system";
   createdAt: string;
+  author: { membership: { user: { name: string } } };
+  attachments?: { id: string; name: string; mimeType: string | null }[];
 };
 
 type Task = {
@@ -35,6 +37,9 @@ export default function TaskDetailPage({
   const { taskId } = use(params);
   const [task, setTask] = useState<Task | null>(null);
   const [comment, setComment] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [driveName, setDriveName] = useState("");
+  const [driveUrl, setDriveUrl] = useState("");
   const [blockedReason, setBlockedReason] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<Task["status"]>("todo");
   const [savingStatus, setSavingStatus] = useState(false);
@@ -74,6 +79,51 @@ export default function TaskDetailPage({
     setComment("");
   }
 
+  async function addAttachment() {
+    if (!attachment) return;
+    const formData = new FormData();
+    formData.set("body", comment);
+    formData.set("file", attachment);
+    const response = await fetch(
+      `${apiBase}/api/v1/tasks/${taskId}/comments/attachments`,
+      {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      },
+    );
+    if (!response.ok) {
+      setError(true);
+      return;
+    }
+    const data = (await response.json()) as { update: Update };
+    setTask((current) =>
+      current ? { ...current, updates: [...current.updates, data.update] } : current,
+    );
+    setComment("");
+    setAttachment(null);
+  }
+  async function addDriveLink() {
+    const response = await fetch(
+      `${apiBase}/api/v1/tasks/${taskId}/comments/drive-links`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: driveName, url: driveUrl }),
+      },
+    );
+    if (!response.ok) {
+      setError(true);
+      return;
+    }
+    const data = (await response.json()) as { update: Update };
+    setTask((current) =>
+      current ? { ...current, updates: [...current.updates, data.update] } : current,
+    );
+    setDriveName("");
+    setDriveUrl("");
+  }
   async function changeStatus() {
     setSavingStatus(true);
     const response = await fetch(`${apiBase}/api/v1/tasks/${taskId}/status`, {
@@ -87,8 +137,12 @@ export default function TaskDetailPage({
       setSavingStatus(false);
       return;
     }
-    const data = (await response.json()) as { task: Task };
-    setTask((current) => (current ? { ...current, ...data.task } : data.task));
+    const data = (await response.json()) as { task: Task; update: Update };
+    setTask((current) =>
+      current
+        ? { ...current, ...data.task, updates: [...current.updates, data.update] }
+        : data.task,
+    );
     setBlockedReason("");
     setSavingStatus(false);
   }
@@ -195,7 +249,8 @@ export default function TaskDetailPage({
                       <span>
                         <strong>{update.kind.replace("_", " ")}</strong>
                         <small>
-                          {update.body} · {new Date(update.createdAt).toLocaleString()}
+                          {update.body} · {update.author.membership.user.name} ·{" "}
+                          {new Date(update.createdAt).toLocaleString()}
                         </small>
                       </span>
                     </li>
@@ -217,6 +272,45 @@ export default function TaskDetailPage({
                 onClick={addComment}
               >
                 Comment
+              </button>
+              <label>
+                Attach a file
+                <input
+                  type="file"
+                  onChange={(event) => setAttachment(event.target.files?.[0] ?? null)}
+                />
+              </label>
+              <button
+                className="button button-secondary"
+                type="button"
+                onClick={addAttachment}
+                disabled={!attachment}
+              >
+                Upload attachment
+              </button>
+              <label>
+                Drive file name
+                <input
+                  value={driveName}
+                  onChange={(event) => setDriveName(event.target.value)}
+                />
+              </label>
+              <label>
+                Google Drive link
+                <input
+                  type="url"
+                  value={driveUrl}
+                  onChange={(event) => setDriveUrl(event.target.value)}
+                  placeholder="https://drive.google.com/..."
+                />
+              </label>
+              <button
+                className="button button-secondary"
+                type="button"
+                onClick={addDriveLink}
+                disabled={!driveName || !driveUrl}
+              >
+                Add Drive link
               </button>
             </section>
           </>

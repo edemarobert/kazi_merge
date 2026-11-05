@@ -4,9 +4,13 @@ import { getActorUserId, requireCompanyId } from "../context/company-context.js"
 import { prisma } from "../db/prisma.js";
 import { requirePolicy } from "../policy/policy.js";
 import { PolicyDeniedError } from "../policy/policy.js";
+import { attachmentUpload, saveAttachment } from "./attachments.js";
+import { parseDriveLinkInput } from "./drive-links.js";
 import {
   isOverdue,
   normalizeStatusChange,
+  parseMentionTokens,
+  parseTaskCommentInput,
   parseTaskCreationInput,
   parseTaskListFilters,
   validateStatusChange,
@@ -25,6 +29,14 @@ const taskInclude = {
   },
   team: { select: { id: true, name: true } },
 } satisfies Prisma.TaskInclude;
+
+const updateInclude = {
+  author: {
+    include: {
+      membership: { include: { user: { select: { id: true, name: true } } } },
+    },
+  },
+} satisfies Prisma.TaskUpdateInclude;
 
 function parseStatus(value: unknown): TaskStatus | undefined {
   return Object.values(TaskStatus).find((status) => status === value);
@@ -190,11 +202,139 @@ export function createTasksRouter() {
     }
   });
 
+  router.post("/:taskId/comments/drive-links", async (request, response, next) => {
+    try {
+      const parsed = parseDriveLinkInput(request.body ?? {});
+      if ("error" in parsed) {
+        response
+          .status(400)
+          .json({ code: "invalid_drive_link", message: parsed.error });
+        return;
+      }
+      const task = await prisma.task.findFirst({
+        where: {
+          id: Array.isArray(request.params.taskId)
+            ? request.params.taskId[0]
+            : request.params.taskId,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+      if (!task) {
+        response
+          .status(404)
+          .json({ code: "task_not_found", message: "Task not found." });
+        return;
+      }
+      await requirePolicy("tasks.update", { targetTaskId: task.id });
+      const update = await prisma.taskUpdate.create({
+        data: {
+          companyId: requireCompanyId(),
+          taskId: task.id,
+          authorEmployeeId: await actorEmployeeId(),
+          kind: TaskUpdateKind.comment,
+          body: parsed.input.name,
+        },
+        include: updateInclude,
+      });
+      const attachment = await prisma.attachment.create({
+        data: {
+          companyId: requireCompanyId(),
+          taskUpdateId: update.id,
+          kind: "drive_link",
+          name: parsed.input.name,
+          url: parsed.input.url,
+          driveFileId: parsed.input.driveFileId,
+        },
+      });
+      await writeActivity("task.drive_link_added", task.id, {
+        updateId: update.id,
+        attachmentId: attachment.id,
+        driveFileId: parsed.input.driveFileId,
+      });
+      response.status(201).json({ update, attachment });
+    } catch (error) {
+      next(error);
+    }
+  });
+  router.post(
+    "/:taskId/comments/attachments",
+    attachmentUpload.single("file"),
+    async (request, response, next) => {
+      try {
+        const parsed = parseTaskCommentInput(request.body ?? {});
+        if ("error" in parsed) {
+          response.status(400).json({ code: "invalid_comment", message: parsed.error });
+          return;
+        }
+        if (!request.file) {
+          response.status(400).json({
+            code: "invalid_attachment",
+            message: "An attachment file is required.",
+          });
+          return;
+        }
+        const task = await prisma.task.findFirst({
+          where: {
+            id: Array.isArray(request.params.taskId)
+              ? request.params.taskId[0]
+              : request.params.taskId,
+            deletedAt: null,
+          },
+          select: { id: true },
+        });
+        if (!task) {
+          response
+            .status(404)
+            .json({ code: "task_not_found", message: "Task not found." });
+          return;
+        }
+        await requirePolicy("tasks.update", { targetTaskId: task.id });
+        const stored = await saveAttachment(request.file);
+        const update = await prisma.taskUpdate.create({
+          data: {
+            companyId: requireCompanyId(),
+            taskId: task.id,
+            authorEmployeeId: await actorEmployeeId(),
+            kind: TaskUpdateKind.comment,
+            body: parsed.body,
+          },
+          include: updateInclude,
+        });
+        const attachment = await prisma.attachment.create({
+          data: {
+            companyId: requireCompanyId(),
+            taskUpdateId: update.id,
+            kind: "upload",
+            name: stored.name,
+            storageKey: stored.storageKey,
+            mimeType: stored.mimeType,
+          },
+        });
+        await writeActivity("task.attachment_added", task.id, {
+          updateId: update.id,
+          attachmentId: attachment.id,
+          mentions: parseMentionTokens(parsed.body),
+        });
+        response.status(201).json({ update, attachment });
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
   router.get("/:taskId", async (request, response, next) => {
     try {
       const task = await prisma.task.findFirst({
-        where: { id: request.params.taskId, deletedAt: null },
-        include: { ...taskInclude, updates: { orderBy: { createdAt: "asc" } } },
+        where: {
+          id: Array.isArray(request.params.taskId)
+            ? request.params.taskId[0]
+            : request.params.taskId,
+          deletedAt: null,
+        },
+        include: {
+          ...taskInclude,
+          updates: { orderBy: { createdAt: "asc" }, include: updateInclude },
+        },
       });
       if (!task || !(await canViewTask(task.id))) {
         response.status(404).json({
@@ -231,7 +371,12 @@ export function createTasksRouter() {
         return;
       }
       const existing = await prisma.task.findFirst({
-        where: { id: request.params.taskId, deletedAt: null },
+        where: {
+          id: Array.isArray(request.params.taskId)
+            ? request.params.taskId[0]
+            : request.params.taskId,
+          deletedAt: null,
+        },
         select: {
           id: true,
           status: true,
@@ -270,6 +415,7 @@ export function createTasksRouter() {
               ? `Status changed to blocked: ${normalized.blockedReason}`
               : `Status changed to ${normalized.status}.`,
         },
+        include: updateInclude,
       });
       await writeActivity("task.status_changed", task.id, {
         from: existing.status,
@@ -284,17 +430,21 @@ export function createTasksRouter() {
 
   router.post("/:taskId/comments", async (request, response, next) => {
     try {
-      const body =
-        typeof request.body?.body === "string" ? request.body.body.trim() : "";
-      if (!body) {
+      const parsed = parseTaskCommentInput(request.body ?? {});
+      if ("error" in parsed) {
         response.status(400).json({
           code: "invalid_comment",
-          message: "Comment body is required.",
+          message: parsed.error,
         });
         return;
       }
       const task = await prisma.task.findFirst({
-        where: { id: request.params.taskId, deletedAt: null },
+        where: {
+          id: Array.isArray(request.params.taskId)
+            ? request.params.taskId[0]
+            : request.params.taskId,
+          deletedAt: null,
+        },
         select: { id: true },
       });
       if (!task) {
@@ -310,10 +460,14 @@ export function createTasksRouter() {
           taskId: task.id,
           authorEmployeeId: await actorEmployeeId(),
           kind: TaskUpdateKind.comment,
-          body,
+          body: parsed.body,
         },
+        include: updateInclude,
       });
-      await writeActivity("task.comment_added", task.id, { updateId: update.id });
+      await writeActivity("task.comment_added", task.id, {
+        updateId: update.id,
+        mentions: parseMentionTokens(parsed.body),
+      });
       response.status(201).json({ update });
     } catch (error) {
       next(error);

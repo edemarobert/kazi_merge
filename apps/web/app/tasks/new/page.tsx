@@ -57,7 +57,11 @@ export default function NewTaskPage() {
       }
       window.location.href = "/tasks";
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Task could not be created.");
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Task could not be created.",
+      );
       setSaving(false);
     }
   }
@@ -70,18 +74,27 @@ export default function NewTaskPage() {
           <div>
             <p className="eyebrow">Task setup</p>
             <h1>New task</h1>
-            <p className="page-intro">Create focused work with an owner, priority, and due date.</p>
+            <p className="page-intro">
+              Create focused work with an owner, priority, and due date.
+            </p>
           </div>
         </header>
         <form className="panel form-stack" onSubmit={submit}>
           {error && <p role="alert">{error}</p>}
           <label>
             Title
-            <input required value={title} onChange={(event) => setTitle(event.target.value)} />
+            <input
+              required
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+            />
           </label>
           <label>
             Description
-            <textarea value={description} onChange={(event) => setDescription(event.target.value)} />
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+            />
           </label>
           <label>
             Assignee
@@ -102,7 +115,10 @@ export default function NewTaskPage() {
           </label>
           <label>
             Priority
-            <select value={priority} onChange={(event) => setPriority(event.target.value)}>
+            <select
+              value={priority}
+              onChange={(event) => setPriority(event.target.value)}
+            >
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
@@ -110,7 +126,11 @@ export default function NewTaskPage() {
           </label>
           <label>
             Due date and time
-            <input type="datetime-local" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
+            <input
+              type="datetime-local"
+              value={dueAt}
+              onChange={(event) => setDueAt(event.target.value)}
+            />
           </label>
           <button className="button button-primary" type="submit" disabled={saving}>
             {saving ? "Creating…" : "Create task"}

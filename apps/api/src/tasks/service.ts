@@ -71,6 +71,25 @@ export type TaskStatusChange = {
   status: TaskStatus;
   blockedReason?: unknown;
 };
+export function parseMentionTokens(body: string): string[] {
+  const mentions = new Set<string>();
+  for (const match of body.matchAll(/@([a-zA-Z0-9._+-]{2,64})/g)) {
+    mentions.add(match[1].toLowerCase());
+  }
+  return [...mentions];
+}
+export function parseTaskCommentInput(payload: {
+  body?: unknown;
+}): { body: string } | { error: string } {
+  const body = typeof payload.body === "string" ? payload.body.trim() : "";
+  if (!body) {
+    return { error: "Comment body is required." };
+  }
+  if (body.length > 2000) {
+    return { error: "Comment body must be 2000 characters or fewer." };
+  }
+  return { body };
+}
 
 export type TaskListFilters = {
   status?: TaskStatus;

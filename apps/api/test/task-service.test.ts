@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { TaskStatus } from "@prisma/client";
+import { parseDriveLinkInput } from "../src/tasks/drive-links.js";
 import {
   isOverdue,
   normalizeStatusChange,
+  parseMentionTokens,
+  parseTaskCommentInput,
   parseTaskCreationInput,
   parseTaskListFilters,
   validateStatusChange,
@@ -123,6 +126,48 @@ test("status normalization clears blocked reasons after unblocking", () => {
   );
 });
 
+test("Drive links accept HTTPS Drive hosts and reject arbitrary URLs", () => {
+  assert.deepEqual(
+    parseDriveLinkInput({
+      name: "  Brief  ",
+      url: "https://drive.google.com/file/d/abc/view",
+      driveFileId: "abc",
+    }),
+    {
+      input: {
+        name: "Brief",
+        url: "https://drive.google.com/file/d/abc/view",
+        driveFileId: "abc",
+      },
+    },
+  );
+  assert.deepEqual(
+    parseDriveLinkInput({ name: "Brief", url: "https://example.com/file" }),
+    {
+      error: "url must be a valid HTTPS Google Drive link.",
+    },
+  );
+});
+test("mention tokens are normalized and deduplicated", () => {
+  assert.deepEqual(parseMentionTokens("@Alice please check @alice and @bob_2"), [
+    "alice",
+    "bob_2",
+  ]);
+});
+test("comment input trims text and rejects empty or oversized comments", () => {
+  assert.deepEqual(parseTaskCommentInput({ body: "  Stock received  " }), {
+    body: "Stock received",
+  });
+  assert.deepEqual(parseTaskCommentInput({ body: "   " }), {
+    error: "Comment body is required.",
+  });
+  assert.deepEqual(parseTaskCommentInput({ body: "x".repeat(2001) }), {
+    error: "Comment body must be 2000 characters or fewer.",
+  });
+  assert.deepEqual(parseTaskCommentInput({ body: 42 }), {
+    error: "Comment body is required.",
+  });
+});
 test("overdue excludes completed tasks", () => {
   const yesterday = new Date(Date.now() - 86400000);
   assert.equal(isOverdue(yesterday, TaskStatus.todo), true);

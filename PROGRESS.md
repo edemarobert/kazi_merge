@@ -2,10 +2,9 @@
 
 ## Current task
 
-- Milestone 2, Task 4 is complete and verified: status/priority filters and
-  overdue indicators.
+- Milestone 2, Task 8 is complete and verified: Google Drive link attachment contracts.
 - Awaiting explicit product-owner approval before beginning Milestone 2,
-  Task 5 (task conversation thread).
+  Task 9 (verify M4, M5, and M9 acceptance criteria).
 
 ## Active remediation
 
@@ -86,11 +85,21 @@
 - [x] Implement task status transitions and blocked-reason validation.
 - [x] Build the initial task list and task detail views.
 - [x] Add status/priority filters and overdue indicators to the API/list.
-- [ ] Implement the task conversation thread.
-- [ ] Add comments, status events, and append-only activity rows.
-- [ ] Add mentions and uploaded attachments.
-- [ ] Add Google Drive link attachment contracts.
+- [x] Implement the task conversation thread.
+- [x] Add comments, status events, and append-only activity rows.
+- [x] Add mentions and uploaded attachments.
+- [x] Add Google Drive link attachment contracts.
 - [ ] Verify M4, M5, and M9 acceptance criteria.
+
+
+- **Task 5 status:** Complete for the initial app conversation thread. The task detail view loads the task timeline in chronological order and presents the conversation area.
+- **Task 6 status:** Complete. Comments are validated and persisted as task updates, status changes append authored status events, and both actions write append-only activity rows. Update responses and the task timeline include the author.
+- **Task 6 validation:** Focused API tests pass; web/API typecheck, lint, and formatting pass. The PostgreSQL isolation test remains skipped because `DATABASE_URL` is unavailable.
+- **Task 6 remaining M5 work:** WhatsApp thread messages and notification delivery remain future tasks.
+- **Task 7 status:** Complete. Thread comments now normalize and record @mention tokens, and the task detail composer supports validated multipart uploads up to 10 MB. Uploaded files receive generated storage keys and are linked to the creating task update and activity row.
+- **Task 7 validation:** API mention and task tests pass (37 passed, 1 skipped); web/API typecheck, lint, and formatting pass. Local uploaded files are stored under the ignored `uploads/` directory or `ATTACHMENTS_DIR`; production object storage remains outside this task.
+- **Task 8 status:** Complete. Drive-link requests validate an HTTPS Google Drive or Docs URL, store only the link and optional file ID as an attachment on a task update, and record a task activity row. The task detail composer can add a Drive link.
+- **Task 8 validation:** API tests pass (38 passed, 1 skipped); web/API typecheck, lint, and formatting pass. Google OAuth/Drive Picker authorization and live Drive access remain part of the later Google integration milestone.
 
 ### Milestone 2 implementation checkpoint
 
