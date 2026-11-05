@@ -15,6 +15,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "benchmark:dashboard": "tsx scripts/dashboard-benchmark.ts",
     "format": "prettier --write \"apps/**/*.{ts,tsx,css}\" \"*.{json,mjs}\"",
     "format:check": "prettier --check \"apps/**/*.{ts,tsx,css}\" \"*.{json,mjs}\"",
     "lint": "eslint \"apps/**/*.{ts,tsx}\"",
