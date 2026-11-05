@@ -2,9 +2,9 @@
 
 ## Current task
 
-- Milestone 3, Task 1 (scoped workload queries) is complete and verified.
+- Milestone 3, Tasks 1–2 are complete and verified.
 - Awaiting explicit product-owner approval before beginning Milestone 3,
-  Task 2 (open-task and overdue counts).
+  Task 3 (due-this-week and blocked-task views).
 
 ## Active remediation
 
@@ -105,7 +105,7 @@
 ### Milestone 3 — Dashboard
 
 - [x] Implement scoped workload queries.
-- [ ] Add open-task and overdue counts.
+- [x] Add open-task and overdue counts.
 - [ ] Add due-this-week and blocked-task views.
 - [ ] Add per-person workload indicators.
 - [ ] Calculate 30-day on-time completion rate.

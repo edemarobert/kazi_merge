@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { MembershipRole } from "@prisma/client";
-import { selectDashboardEmployeeIds } from "../src/dashboard/scope.js";
+import {
+  dashboardTaskAssigneeFilter,
+  selectDashboardEmployeeIds,
+} from "../src/dashboard/scope.js";
 
 test("owners receive company-wide workload scope", () => {
   assert.equal(
@@ -26,4 +29,13 @@ test("managers receive team members and recursive reports only", () => {
     new Set(ids),
     new Set(["manager", "team-member", "direct-report", "nested-report"]),
   );
+});
+test("dashboard task counts stay company-wide for owners", () => {
+  assert.deepEqual(dashboardTaskAssigneeFilter(null), {});
+});
+
+test("dashboard task counts use the manager workload scope", () => {
+  assert.deepEqual(dashboardTaskAssigneeFilter(["manager", "report"]), {
+    assigneeEmployeeId: { in: ["manager", "report"] },
+  });
 });

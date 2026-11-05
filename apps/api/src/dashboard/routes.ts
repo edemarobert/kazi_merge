@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getActorUserId, requireCompanyId } from "../context/company-context.js";
-import { selectDashboardEmployeeIds } from "./scope.js";
+import { dashboardTaskAssigneeFilter, selectDashboardEmployeeIds } from "./scope.js";
 import { prisma } from "../db/prisma.js";
 import { requirePolicy } from "../policy/policy.js";
 
@@ -39,6 +39,7 @@ export function createDashboardRouter() {
           teamIds: employee.teamMembers.map((teamMember) => teamMember.teamId),
         })),
       );
+      const taskAssigneeFilter = dashboardTaskAssigneeFilter(scopedEmployeeIds);
       const now = new Date();
       const weekEnd = new Date(now);
       weekEnd.setDate(now.getDate() + (7 - now.getDay()));
@@ -49,10 +50,19 @@ export function createDashboardRouter() {
             select: { name: true, trialEndsAt: true },
           }),
           prisma.task.count({
-            where: { deletedAt: null, status: { not: "done" } },
+            where: {
+              ...taskAssigneeFilter,
+              deletedAt: null,
+              status: { not: "done" },
+            },
           }),
           prisma.task.count({
-            where: { deletedAt: null, status: { not: "done" }, dueAt: { lt: now } },
+            where: {
+              ...taskAssigneeFilter,
+              deletedAt: null,
+              status: { not: "done" },
+              dueAt: { lt: now },
+            },
           }),
           prisma.task.count({
             where: {
@@ -72,7 +82,11 @@ export function createDashboardRouter() {
               id: true,
               membership: { select: { user: { select: { name: true } } } },
               assignedTasks: {
-                where: { deletedAt: null, status: { not: "done" } },
+                where: {
+                  ...taskAssigneeFilter,
+                  deletedAt: null,
+                  status: { not: "done" },
+                },
                 select: { dueAt: true },
               },
             },

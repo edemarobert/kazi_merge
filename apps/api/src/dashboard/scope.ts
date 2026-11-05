@@ -45,3 +45,8 @@ export function selectDashboardEmployeeIds(
 
   return [...scopedIds];
 }
+export function dashboardTaskAssigneeFilter(scopedEmployeeIds: string[] | null): {
+  assigneeEmployeeId?: { in: string[] };
+} {
+  return scopedEmployeeIds ? { assigneeEmployeeId: { in: scopedEmployeeIds } } : {};
+}
