@@ -5,6 +5,7 @@
 - Milestone 3, Tasks 1–9 are complete and verified.
 - Awaiting explicit product-owner approval before beginning Milestone 3,
   Task 10 (verify M6 acceptance criteria).
+- Dashboard loading, empty, and error states now have Playwright browser coverage.
 
 ## Active remediation
 
