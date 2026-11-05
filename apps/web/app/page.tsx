@@ -16,7 +16,7 @@ type DashboardData = {
     onTimeCompletionRate: number | null;
   };
   workload: { id: string; name: string; open: number; overdue: number }[];
-  activity: { id: string; action: string; createdAt: string }[];
+  activity: { id: string; action: string; actorName: string; createdAt: string }[];
 };
 
 const emptyData: DashboardData = {
@@ -125,7 +125,9 @@ export default function HomePage() {
                 <li key={item.id}>
                   <span className="activity-dot primary-dot" />
                   <span>
-                    <strong>{item.action}</strong>
+                    <strong>
+                      {item.actorName} - {item.action}
+                    </strong>
                     <small>{new Date(item.createdAt).toLocaleString()}</small>
                   </span>
                 </li>

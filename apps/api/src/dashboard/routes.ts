@@ -123,7 +123,12 @@ export function createDashboardRouter() {
         prisma.activityLog.findMany({
           orderBy: { createdAt: "desc" },
           take: 5,
-          select: { id: true, action: true, createdAt: true },
+          select: {
+            id: true,
+            action: true,
+            createdAt: true,
+            actor: { select: { name: true } },
+          },
         }),
       ]);
       const onTimeCompletionRate = calculateOnTimeCompletionRate(
@@ -148,7 +153,12 @@ export function createDashboardRouter() {
             (task) => task.dueAt && task.dueAt < now,
           ).length,
         })),
-        activity,
+        activity: activity.map((item) => ({
+          id: item.id,
+          action: item.action,
+          actorName: item.actor.name,
+          createdAt: item.createdAt,
+        })),
       });
     } catch (error) {
       next(error);
