@@ -33,6 +33,22 @@ test.describe("dashboard states", () => {
     await page.goto("/");
     await expect(page.getByText("No workload data yet.")).toBeVisible();
     await expect(page.getByText("No recent activity yet.")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Open tasks/ })).toHaveAttribute(
+      "href",
+      "/tasks?open=true",
+    );
+    await expect(page.getByRole("link", { name: /Overdue/ })).toHaveAttribute(
+      "href",
+      "/tasks?overdue=true",
+    );
+    await expect(page.getByRole("link", { name: /Due this week/ })).toHaveAttribute(
+      "href",
+      "/tasks?dueThisWeek=true",
+    );
+    await expect(page.getByRole("link", { name: /Blocked/ })).toHaveAttribute(
+      "href",
+      "/tasks?status=blocked",
+    );
   });
 
   test("shows an error alert when dashboard data fails", async ({ page }) => {

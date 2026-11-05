@@ -2,9 +2,9 @@
 
 ## Current task
 
-- Milestone 3, Tasks 1–9 are complete and verified.
-- Awaiting explicit product-owner approval before beginning Milestone 3,
-  Task 10 (verify M6 acceptance criteria).
+- Milestone 3, Tasks 1–10 acceptance review is complete with one remaining evidence gap.
+- Awaiting explicit product-owner approval before beginning Milestone 4,
+  Task 1 (define notification events and delivery records).
 - Dashboard loading, empty, and error states now have Playwright browser coverage.
 
 ## Active remediation
@@ -114,7 +114,10 @@
 - [x] Link dashboard counts to filtered task lists.
 - [x] Add loading, empty, and error states.
 - [x] Benchmark 50 employees and 2,000 tasks.
-- [ ] Verify M6 acceptance criteria.
+- [x] Verify M6 acceptance criteria.
+- **Task 10 status:** M6 acceptance review complete. The dashboard benchmark ran against 50 employees and 2,000 tasks with a 126.03 ms p95 API response, and dashboard counts matched the linked filtered task-list responses.
+- **Task 10 validation:** Production build passed; formatting, lint, typecheck, 45 API tests, and 3 Playwright dashboard tests passed. Manager scope selection is covered by [dashboard-scope.test.ts](apps/api/test/dashboard-scope.test.ts).
+- **Task 10 remaining evidence gap:** An authenticated manager route/browser integration test is still needed to prove the rendered dashboard cannot expose data outside the manager's scope.
 
 ### Milestone 4 — Notification engine
 

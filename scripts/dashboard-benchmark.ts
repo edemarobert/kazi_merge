@@ -149,7 +149,17 @@ async function main() {
     await fetch(`${listening.url}/api/v1/dashboard`, { headers });
 
     const durations: number[] = [];
-    let result: { metrics: { openTasks: number }; workload: unknown[] } | undefined;
+    let result:
+      | {
+          metrics: {
+            openTasks: number;
+            overdue: number;
+            dueThisWeek: number;
+            blocked: number;
+          };
+          workload: unknown[];
+        }
+      | undefined;
     for (let index = 0; index < requestCount; index += 1) {
       const startedAt = performance.now();
       const response = await fetch(`${listening.url}/api/v1/dashboard`, { headers });
@@ -172,6 +182,40 @@ async function main() {
     ) {
       throw new Error(
         `Unexpected dashboard result: ${JSON.stringify(result?.metrics)} with ${result?.workload.length ?? 0} workload rows.`,
+      );
+    }
+
+    const linkedFilters = {
+      openTasks: "open=true",
+      overdue: "overdue=true",
+      dueThisWeek: "dueThisWeek=true",
+      blocked: "status=blocked",
+    } as const;
+    const linkedCounts = Object.fromEntries(
+      await Promise.all(
+        Object.entries(linkedFilters).map(async ([name, query]) => {
+          const response = await fetch(`${listening.url}/api/v1/tasks?${query}`, {
+            headers,
+          });
+          if (!response.ok) {
+            throw new Error(
+              `Linked task list request failed with HTTP ${response.status}.`,
+            );
+          }
+          const payload = (await response.json()) as { tasks: unknown[] };
+          return [name, payload.tasks.length];
+        }),
+      ),
+    );
+    const expectedLinkedCounts = {
+      openTasks: result.metrics.openTasks,
+      overdue: result.metrics.overdue,
+      dueThisWeek: result.metrics.dueThisWeek,
+      blocked: result.metrics.blocked,
+    };
+    if (JSON.stringify(linkedCounts) !== JSON.stringify(expectedLinkedCounts)) {
+      throw new Error(
+        `Dashboard counts do not match linked task lists: ${JSON.stringify({ linkedCounts, expectedLinkedCounts })}.`,
       );
     }
     console.log(
