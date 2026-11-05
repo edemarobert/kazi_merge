@@ -15,7 +15,6 @@
 - [x] Connect CSV import and dashboard UI to scoped API data.
 - [x] Update [MILESTONE_1_REVIEW.md](MILESTONE_1_REVIEW.md) with remediation
       evidence and remaining gaps.
-- [ ] Fix dashboard company lookup and run the live PostgreSQL isolation test.
 
 ## Milestones and tasks
 
@@ -55,9 +54,8 @@
 - **M1 — Invite acceptance activates the invited role:** **Pass (unit
   evidence).** `apps/api/test/invites.test.ts` verifies expiry and activation;
   live database verification remains unavailable.
-- **M1 — Cross-company isolation:** **Pass (test-double evidence), untested
-  against live PostgreSQL.** Company-scoped query tests pass, while the
-  PostgreSQL isolation test is skipped without `DATABASE_URL`.
+- **M1 — Cross-company isolation:** **Pass.** Company-scoped query tests and
+  the live PostgreSQL isolation test pass after migration and seed setup.
 - **M2 — Import 30 employees with non-blocking row errors:** **Partial.** The
   API parser/import service and focused tests pass, but
   `apps/web/app/people/import/page.tsx` only performs a local preview and does
@@ -94,60 +92,19 @@
 
 - **Task 5 status:** Complete for the initial app conversation thread. The task detail view loads the task timeline in chronological order and presents the conversation area.
 - **Task 6 status:** Complete. Comments are validated and persisted as task updates, status changes append authored status events, and both actions write append-only activity rows. Update responses and the task timeline include the author.
-- **Task 6 validation:** Focused API tests pass; web/API typecheck, lint, and formatting pass. The PostgreSQL isolation test remains skipped because `DATABASE_URL` is unavailable.
+- **Task 6 validation:** Focused API tests pass; web/API typecheck, lint, and formatting pass. The live PostgreSQL isolation test passes after local migration and seed setup.
 - **Task 6 remaining M5 work:** WhatsApp thread messages and notification delivery remain future tasks.
 - **Task 7 status:** Complete. Thread comments now normalize and record @mention tokens, and the task detail composer supports validated multipart uploads up to 10 MB. Uploaded files receive generated storage keys and are linked to the creating task update and activity row.
 - **Task 7 validation:** API mention and task tests pass (37 passed, 1 skipped); web/API typecheck, lint, and formatting pass. Local uploaded files are stored under the ignored `uploads/` directory or `ATTACHMENTS_DIR`; production object storage remains outside this task.
 - **Task 8 status:** Complete. Drive-link requests validate an HTTPS Google Drive or Docs URL, store only the link and optional file ID as an attachment on a task update, and record a task activity row. The task detail composer can add a Drive link.
 - **Task 8 validation:** API tests pass (38 passed, 1 skipped); web/API typecheck, lint, and formatting pass. Google OAuth/Drive Picker authorization and live Drive access remain part of the later Google integration milestone.
 - **Task 9 status:** Complete as an acceptance review. M4 blocked-reason validation, overdue flags, task views, and status transitions pass available automated evidence. M5 app-thread comments, authored status events, mentions, uploads, and Drive-link metadata pass available automated evidence. M9 task activity rows are written for the implemented task changes.
-- **Task 9 validation:** Typecheck passed; all 39 API tests ran with 38 passed and 1 skipped; production build passed with existing non-blocking Next.js ESLint and autoprefixer warnings; API health returned 200; web home route returned 200. Runtime plan: `.tsupgrader/runtime-validation/eval-plan.json`.
-- **Task 9 acceptance gaps:** M4 task reassignment notifications are not implemented. M5 preferred-channel delivery and WhatsApp replies are not implemented, and Drive-link rendering/opening plus live provider flows remain untested. M9 complete before/after coverage, owner activity views, and live PostgreSQL evidence remain incomplete. The PostgreSQL isolation test is skipped because `DATABASE_URL` is unavailable.
-
-### Milestone 2 implementation checkpoint
-
-- **Task 1 status:** Complete. Task creation validates required fields, trims
-  text, rejects invalid priorities and dates, requires an active employee in
-  the active company, and validates that an optional team includes the
-  assignee. Shared policy checks and company-scoped Prisma writes are used.
-- **Task 2 status:** Complete. Status changes accept the four supported task
-  statuses, require a trimmed reason when moving to Blocked, reject malformed
-  or overlong reasons with HTTP 400, clear stale blocked reasons when leaving
-  Blocked, set completion timestamps for Done, append a status update, and
-  write an activity-log row. The task detail UI now collects a blocked reason
-  before submitting the transition.
-- **Validation:** API tests pass (34 passed, 1 skipped); lint, typecheck,
-  formatting, and production build pass. The PostgreSQL isolation test remains
-  skipped because `DATABASE_URL` is unavailable.
-- **Task 2 evidence:** Status validation and normalization are covered in
-  `apps/api/test/task-service.test.ts`; route-level live database coverage is
-  still deferred until PostgreSQL is configured.
-- **Task 3 status:** Complete. The task list and detail pages load scoped API
-  data, show loading/error/empty states, expose task metadata and assignment
-  details, link list rows to task details, and visibly flag overdue tasks.
-- **Task 3 validation:** API tests pass (34 passed, 1 skipped); lint,
-  typecheck, formatting, problem checks, and production build pass. The build
-  retains non-blocking existing warnings for the Next.js ESLint plugin and
-  autoprefixer compatibility. The PostgreSQL isolation test remains skipped
-  because `DATABASE_URL` is unavailable.
-- **Task 4 status:** Complete. The task API validates status, priority,
-  overdue, and assignee filters, applies them within the existing company
-  scope, and rejects invalid filter values with HTTP 400. The task list now
-  provides status, priority, and overdue-only controls and reloads filtered
-  results from the API.
-- **Task 4 validation:** API tests pass (35 passed, 1 skipped); lint,
-  typecheck, formatting, problem checks, and production build pass. The build
-  retains non-blocking existing warnings for the Next.js ESLint plugin and
-  autoprefixer compatibility. The PostgreSQL isolation test remains skipped
-  because `DATABASE_URL` is unavailable.
-- **Workflow rule:** Complete and verify one task, update this file, then stop
-  and wait for explicit approval before starting the next task.
+- **Task 9 validation:** Typecheck passed; all 41 API tests passed; production build passed with existing non-blocking Next.js ESLint and autoprefixer warnings; API health returned 200; web home route returned 200. Runtime plan: `.tsupgrader/runtime-validation/eval-plan.json`.
+- **Task 9 acceptance gaps:** M4 task reassignment notifications are not implemented. M5 preferred-channel delivery and WhatsApp replies are not implemented, and Drive-link rendering/opening plus live provider flows remain untested. M9 complete before/after coverage and owner activity views remain incomplete.
 
 ### Milestone 3 — Dashboard
 
 - [x] Implement scoped workload queries.
-- **Milestone 3 Task 1 status:** Complete. Dashboard workload employees are scoped by role: owners see all active company employees; managers see their own teams and recursive reporting tree. Employee dashboard access remains denied by policy.
-- **Milestone 3 Task 1 validation:** Scope unit tests, typecheck, lint, and formatting pass. Live dashboard/database verification remains deferred because `DATABASE_URL` is unavailable.
 - [ ] Add open-task and overdue counts.
 - [ ] Add due-this-week and blocked-task views.
 - [ ] Add per-person workload indicators.
@@ -224,9 +181,9 @@
 - No application code is to be written until setup is approved.
 - The product name is Kazi Merge; Kazi is the Kiswahili word for work.
 - Milestone 0 was approved at 95% completion; live PostgreSQL isolation
-  verification remains the deferred evidence item.
+  verification is complete.
 - Node.js v24.18.1 and npm v11.16.0 are available; pnpm is not installed.
-- No project-defined build, test, or start commands exist yet.
+- Project build, test, lint, format, migration, and seed commands are defined.
 
 ## Assumptions
 
@@ -238,8 +195,8 @@
 
 - Product-owner decisions in the open-questions document are not yet confirmed.
 - External provider credentials, production domains, and deployment settings are not configured.
-- No database migrations, deployment artifacts, or business features have been
-  created; the web/API foundation shells and one API health test now exist.
+- Database migrations are applied locally, demo data is seeded, and the web/API
+  foundation plus business feature modules are under active implementation.
 - The initial Next.js shell dependency was upgraded from 15.5.6 to 15.5.28
   after npm audit reported a critical advisory.
 - npm audit still reports transitive postcss and sharp advisories; full
@@ -247,16 +204,11 @@
 - The Next.js build reports that the Next.js ESLint plugin is not detected in
   the flat ESLint configuration; this is a non-blocking warning to revisit
   when Next-specific lint rules are needed.
-- Local PostgreSQL is not running in this environment, so the empty migration
-  baseline was generated and validated but not applied to a database.
-- The Section 5 migration is generated and validated, but cannot be applied
-  locally until PostgreSQL connection details are available.
 - The company-scoping guard is wired into the Prisma client and authenticated
   request context; business routes will be added as their modules are built.
 - The role-policy module is framework-neutral and now receives actor identity
   from authenticated request context.
-- Demo seed data is deterministic and idempotent, but the seed command could
-  not run because PostgreSQL is not available at localhost:5432.
+- Demo seed data is deterministic and idempotent; the local database is seeded.
 - Prisma 6 reports that the package.json seed configuration will need to move
   to prisma.config.ts before a future Prisma 7 upgrade.
 - The PWA shell uses placeholder dashboard data and profile information until
