@@ -2,12 +2,17 @@ import { MembershipRole, Prisma } from "@prisma/client";
 import { Router } from "express";
 import multer from "multer";
 import { getActorUserId, requireCompanyId } from "../context/company-context.js";
+import { createGoogleDriveAccessToken } from "../auth/index.js";
 import { prisma } from "../db/prisma.js";
 import { requirePolicy, type PolicyAction } from "../policy/policy.js";
 import { getVisibleEmployee, listVisibleEmployees } from "./directory.js";
 import { createInviteService, type InviteStore } from "./invites.js";
 import { changeManager, listOrganization } from "./organization.js";
 import { importEmployeeRows, previewEmployeeCsv } from "./csv-import.js";
+import {
+  exportGoogleSheetCsv,
+  validateSpreadsheetFileId,
+} from "../integrations/google-drive.js";
 
 export function createPeopleRouter() {
   const router = Router();
@@ -55,6 +60,25 @@ export function createPeopleRouter() {
     }
   });
 
+  router.post("/import/google-sheet/preview", async (request, response, next) => {
+    try {
+      await requirePolicy("people.import");
+      const fileId = validateSpreadsheetFileId(request.body?.fileId);
+      const actorUserId = getActorUserId();
+      if (!actorUserId) {
+        response.status(401).json({ code: "authentication_required" });
+        return;
+      }
+      const accessToken = await createGoogleDriveAccessToken(
+        actorUserId,
+        requireCompanyId(),
+      );
+      const csv = await exportGoogleSheetCsv(fileId, accessToken);
+      response.json({ csv, ...previewEmployeeCsv(csv) });
+    } catch (error) {
+      next(error);
+    }
+  });
   router.post(
     "/import/preview",
     upload.single("file"),

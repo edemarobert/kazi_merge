@@ -17,6 +17,7 @@ export default function ImportPeoplePage() {
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const [imported, setImported] = useState<number | null>(null);
+  const [googleSheetId, setGoogleSheetId] = useState("");
   const rows = useMemo(() => csv.trim().split(/\r?\n/).filter(Boolean), [csv]);
 
   return (
@@ -33,6 +34,50 @@ export default function ImportPeoplePage() {
           </div>
         </header>
         <section className="panel import-panel">
+          <label className="import-label" htmlFor="google-sheet-id">
+            Google Sheet file ID
+          </label>
+          <div className="import-actions">
+            <input
+              id="google-sheet-id"
+              value={googleSheetId}
+              onChange={(event) => setGoogleSheetId(event.target.value)}
+              placeholder="Paste the ID from a picked Google Sheet"
+            />
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={busy || !googleSheetId.trim()}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  const response = await fetch(
+                    (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000") +
+                      "/api/v1/people/import/google-sheet/preview",
+                    {
+                      method: "POST",
+                      credentials: "include",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ fileId: googleSheetId }),
+                    },
+                  );
+                  if (!response.ok) throw new Error("Google Sheet preview failed.");
+                  const result = (await response.json()) as {
+                    csv: string;
+                    rows: unknown[];
+                    errors: { rowNumber: number; message: string }[];
+                  };
+                  setCsv(result.csv);
+                  setPreview({ rows: result.rows, errors: result.errors });
+                  setPreviewed(true);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Preview Google Sheet
+            </button>
+          </div>{" "}
           <label className="import-label" htmlFor="csv-content">
             {translations.importPeople.csvLabel}
           </label>
