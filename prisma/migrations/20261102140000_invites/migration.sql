@@ -13,6 +13,6 @@ CREATE TABLE "invites" (
 CREATE UNIQUE INDEX "invites_token_hash_key" ON "invites"("token_hash");
 CREATE INDEX "invites_company_id_invitee_user_id_idx" ON "invites"("company_id", "invitee_user_id");
 CREATE INDEX "invites_expires_at_idx" ON "invites"("expires_at");
-ALTER TABLE "invites" ADD CONSTRAINT "invites_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "invites" ADD CONSTRAINT "invites_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "invites" ADD CONSTRAINT "invites_inviter_user_id_fkey" FOREIGN KEY ("inviter_user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "invites" ADD CONSTRAINT "invites_invitee_user_id_fkey" FOREIGN KEY ("invitee_user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

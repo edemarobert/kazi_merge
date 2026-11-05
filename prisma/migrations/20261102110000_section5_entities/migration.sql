@@ -1,4 +1,4 @@
-﻿-- CreateEnum
+-- CreateEnum
 CREATE TYPE "CompanyPlan" AS ENUM ('trial', 'paid');
 
 -- CreateEnum
