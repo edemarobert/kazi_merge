@@ -2,9 +2,9 @@
 
 ## Current task
 
-- Milestone 2, Task 9 is complete and verified: M4, M5, and M9 acceptance review.
-- Awaiting explicit product-owner approval before beginning Milestone 2,
-  Milestone 3, Task 1 (scoped workload queries).
+- Milestone 3, Task 1 (scoped workload queries) is complete and verified.
+- Awaiting explicit product-owner approval before beginning Milestone 3,
+  Task 2 (open-task and overdue counts).
 
 ## Active remediation
 
@@ -99,7 +99,8 @@
 - **Task 7 status:** Complete. Thread comments now normalize and record @mention tokens, and the task detail composer supports validated multipart uploads up to 10 MB. Uploaded files receive generated storage keys and are linked to the creating task update and activity row.
 - **Task 7 validation:** API mention and task tests pass (37 passed, 1 skipped); web/API typecheck, lint, and formatting pass. Local uploaded files are stored under the ignored `uploads/` directory or `ATTACHMENTS_DIR`; production object storage remains outside this task.
 - **Task 8 status:** Complete. Drive-link requests validate an HTTPS Google Drive or Docs URL, store only the link and optional file ID as an attachment on a task update, and record a task activity row. The task detail composer can add a Drive link.
-- **Task 8 validation:** API tests pass (38 passed, 1 skipped); web/API typecheck, lint, and formatting pass. Google OAuth/Drive Picker authorization and live Drive access remain part of the later Google integration milestone.- **Task 9 status:** Complete as an acceptance review. M4 blocked-reason validation, overdue flags, task views, and status transitions pass available automated evidence. M5 app-thread comments, authored status events, mentions, uploads, and Drive-link metadata pass available automated evidence. M9 task activity rows are written for the implemented task changes.
+- **Task 8 validation:** API tests pass (38 passed, 1 skipped); web/API typecheck, lint, and formatting pass. Google OAuth/Drive Picker authorization and live Drive access remain part of the later Google integration milestone.
+- **Task 9 status:** Complete as an acceptance review. M4 blocked-reason validation, overdue flags, task views, and status transitions pass available automated evidence. M5 app-thread comments, authored status events, mentions, uploads, and Drive-link metadata pass available automated evidence. M9 task activity rows are written for the implemented task changes.
 - **Task 9 validation:** Typecheck passed; all 39 API tests ran with 38 passed and 1 skipped; production build passed with existing non-blocking Next.js ESLint and autoprefixer warnings; API health returned 200; web home route returned 200. Runtime plan: `.tsupgrader/runtime-validation/eval-plan.json`.
 - **Task 9 acceptance gaps:** M4 task reassignment notifications are not implemented. M5 preferred-channel delivery and WhatsApp replies are not implemented, and Drive-link rendering/opening plus live provider flows remain untested. M9 complete before/after coverage, owner activity views, and live PostgreSQL evidence remain incomplete. The PostgreSQL isolation test is skipped because `DATABASE_URL` is unavailable.
 
@@ -144,7 +145,9 @@
 
 ### Milestone 3 — Dashboard
 
-- [ ] Implement scoped workload queries.
+- [x] Implement scoped workload queries.
+- **Milestone 3 Task 1 status:** Complete. Dashboard workload employees are scoped by role: owners see all active company employees; managers see their own teams and recursive reporting tree. Employee dashboard access remains denied by policy.
+- **Milestone 3 Task 1 validation:** Scope unit tests, typecheck, lint, and formatting pass. Live dashboard/database verification remains deferred because `DATABASE_URL` is unavailable.
 - [ ] Add open-task and overdue counts.
 - [ ] Add due-this-week and blocked-task views.
 - [ ] Add per-person workload indicators.

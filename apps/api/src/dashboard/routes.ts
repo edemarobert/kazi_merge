@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { getCompanyId } from "../context/company-context.js";
+import { getActorUserId, requireCompanyId } from "../context/company-context.js";
+import { selectDashboardEmployeeIds } from "./scope.js";
 import { prisma } from "../db/prisma.js";
 import { requirePolicy } from "../policy/policy.js";
 
@@ -9,13 +10,42 @@ export function createDashboardRouter() {
   router.get("/", async (_request, response, next) => {
     try {
       await requirePolicy("dashboard.view");
+      const companyId = requireCompanyId();
+      const actorUserId = getActorUserId();
+      if (!actorUserId) {
+        throw new Error("Actor context is required for dashboard access.");
+      }
+      const membership = await prisma.membership.findUnique({
+        where: { companyId_userId: { companyId, userId: actorUserId } },
+        select: { role: true, employee: { select: { id: true } } },
+      });
+      if (!membership?.employee) {
+        throw new Error("An employee record is required for dashboard access.");
+      }
+      const scopeEmployees = await prisma.employee.findMany({
+        where: { status: "active", deletedAt: null },
+        select: {
+          id: true,
+          managerId: true,
+          teamMembers: { select: { teamId: true } },
+        },
+      });
+      const scopedEmployeeIds = selectDashboardEmployeeIds(
+        membership.role,
+        membership.employee.id,
+        scopeEmployees.map((employee) => ({
+          id: employee.id,
+          managerId: employee.managerId,
+          teamIds: employee.teamMembers.map((teamMember) => teamMember.teamId),
+        })),
+      );
       const now = new Date();
       const weekEnd = new Date(now);
       weekEnd.setDate(now.getDate() + (7 - now.getDay()));
       const [company, openTasks, overdue, dueThisWeek, blocked, workload, activity] =
         await Promise.all([
           prisma.company.findFirst({
-            where: { id: getCompanyId() },
+            where: { id: companyId },
             select: { name: true, trialEndsAt: true },
           }),
           prisma.task.count({
@@ -33,7 +63,11 @@ export function createDashboardRouter() {
           }),
           prisma.task.count({ where: { deletedAt: null, status: "blocked" } }),
           prisma.employee.findMany({
-            where: { status: "active", deletedAt: null },
+            where: {
+              status: "active",
+              deletedAt: null,
+              ...(scopedEmployeeIds ? { id: { in: scopedEmployeeIds } } : {}),
+            },
             select: {
               id: true,
               membership: { select: { user: { select: { name: true } } } },
