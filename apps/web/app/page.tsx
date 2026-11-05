@@ -43,6 +43,8 @@ export default function HomePage() {
       .catch(() => setError(true));
   }, []);
 
+  const maxOpenTasks = Math.max(1, ...data.workload.map((person) => person.open));
+
   return (
     <AppShell>
       <div className="page">
@@ -94,7 +96,7 @@ export default function HomePage() {
             </div>
             <div className="workload-list">
               {data.workload.map((person) => (
-                <WorkloadRow key={person.id} {...person} />
+                <WorkloadRow key={person.id} {...person} maxOpenTasks={maxOpenTasks} />
               ))}
             </div>
           </section>
@@ -137,12 +139,16 @@ function WorkloadRow({
   name,
   open,
   overdue,
+  maxOpenTasks,
 }: {
   id: string;
   name: string;
   open: number;
   overdue: number;
+  maxOpenTasks: number;
 }) {
+  const workloadPercent = Math.round((open / maxOpenTasks) * 100);
+
   return (
     <div className="workload-row">
       <span className="avatar">{name.slice(0, 2).toUpperCase()}</span>
@@ -152,8 +158,15 @@ function WorkloadRow({
           {open} {translations.dashboard.workloadOpenTasks}
         </small>
       </span>
-      <span className="workload-bar">
-        <span style={{ width: `${Math.min(open * 10, 100)}%` }} />
+      <span
+        className="workload-bar"
+        role="progressbar"
+        aria-label={`${name} workload`}
+        aria-valuemin={0}
+        aria-valuemax={maxOpenTasks}
+        aria-valuenow={open}
+      >
+        <span style={{ width: `${workloadPercent}%` }} />
       </span>
       {overdue > 0 ? (
         <span className="overdue-label">
