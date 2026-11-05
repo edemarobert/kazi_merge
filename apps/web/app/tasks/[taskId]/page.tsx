@@ -81,6 +81,7 @@ export default function TaskDetailPage({
   const [driveName, setDriveName] = useState("");
   const [driveUrl, setDriveUrl] = useState("");
   const [driveFileId, setDriveFileId] = useState("");
+  const [driveMimeType, setDriveMimeType] = useState("");
   const [pickerLoading, setPickerLoading] = useState(false);
   const [blockedReason, setBlockedReason] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<Task["status"]>("todo");
@@ -179,6 +180,7 @@ export default function TaskDetailPage({
           if (data.action === picker.Action.PICKED && data.docs?.[0]) {
             const file = data.docs[0];
             setDriveFileId(file.id ?? "");
+            setDriveMimeType(file.mimeType ?? "");
             setDriveName(file.name ?? "");
             setDriveUrl(file.url ?? "");
           }
@@ -217,7 +219,12 @@ export default function TaskDetailPage({
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: driveName, url: driveUrl, driveFileId }),
+        body: JSON.stringify({
+          name: driveName,
+          url: driveUrl,
+          driveFileId,
+          mimeType: driveMimeType,
+        }),
       },
     );
     if (!response.ok) {
@@ -230,6 +237,8 @@ export default function TaskDetailPage({
     );
     setDriveName("");
     setDriveUrl("");
+    setDriveFileId("");
+    setDriveMimeType("");
   }
   async function changeStatus() {
     setSavingStatus(true);

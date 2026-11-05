@@ -276,6 +276,7 @@ export function createTasksRouter() {
           name: parsed.input.name,
           url: parsed.input.url,
           driveFileId: parsed.input.driveFileId,
+          mimeType: parsed.input.mimeType,
         },
       });
       await writeActivity("task.drive_link_added", task.id, {

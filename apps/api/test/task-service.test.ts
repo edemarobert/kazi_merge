@@ -142,12 +142,14 @@ test("Drive links accept HTTPS Drive hosts and reject arbitrary URLs", () => {
       name: "  Brief  ",
       url: "https://drive.google.com/file/d/abc/view",
       driveFileId: "abc",
+      mimeType: "application/pdf",
     }),
     {
       input: {
         name: "Brief",
         url: "https://drive.google.com/file/d/abc/view",
         driveFileId: "abc",
+        mimeType: "application/pdf",
       },
     },
   );

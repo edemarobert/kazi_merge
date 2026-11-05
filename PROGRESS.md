@@ -166,7 +166,7 @@
 - [x] Update and remove Calendar events on task changes.
 - [x] Implement secure Google disconnect and token removal.
 - [x] Integrate the narrow-scope Google Drive Picker.
-- [ ] Store Drive file metadata and links only.
+- [x] Store Drive file metadata and links only.
 - [ ] Implement Google Sheets import.
 - [ ] Reuse CSV preview and per-row validation for Sheets.
 - [ ] Test integration-disabled behavior and narrow scopes.

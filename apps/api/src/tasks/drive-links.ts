@@ -4,12 +4,14 @@ export type DriveLinkInput = {
   name: string;
   url: string;
   driveFileId: string | null;
+  mimeType: string | null;
 };
 
 export function parseDriveLinkInput(payload: {
   name?: unknown;
   url?: unknown;
   driveFileId?: unknown;
+  mimeType?: unknown;
 }): { input: DriveLinkInput } | { error: string } {
   const name = typeof payload.name === "string" ? payload.name.trim() : "";
   const rawUrl = typeof payload.url === "string" ? payload.url.trim() : "";
@@ -19,12 +21,24 @@ export function parseDriveLinkInput(payload: {
       : payload.driveFileId === undefined || payload.driveFileId === null
         ? null
         : "invalid";
+  const mimeType =
+    typeof payload.mimeType === "string"
+      ? payload.mimeType.trim() || null
+      : payload.mimeType === undefined || payload.mimeType === null
+        ? null
+        : "invalid";
 
   if (!name || name.length > 200) {
     return { error: "name is required and must be 200 characters or fewer." };
   }
   if (driveFileId === "invalid") {
     return { error: "driveFileId must be text." };
+  }
+  if (mimeType === "invalid") {
+    return { error: "mimeType must be text." };
+  }
+  if (mimeType && mimeType.length > 200) {
+    return { error: "mimeType must be 200 characters or fewer." };
   }
 
   let url: URL;
@@ -42,6 +56,7 @@ export function parseDriveLinkInput(payload: {
       name,
       url: url.toString(),
       driveFileId,
+      mimeType,
     },
   };
 }
