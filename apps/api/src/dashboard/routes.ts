@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { getActorUserId, requireCompanyId } from "../context/company-context.js";
-import { dashboardTaskAssigneeFilter, selectDashboardEmployeeIds } from "./scope.js";
+import {
+  calculateOnTimeCompletionRate,
+  dashboardTaskAssigneeFilter,
+  selectDashboardEmployeeIds,
+} from "./scope.js";
 import { prisma } from "../db/prisma.js";
 import { requirePolicy } from "../policy/policy.js";
 
@@ -43,67 +47,89 @@ export function createDashboardRouter() {
       const now = new Date();
       const weekEnd = new Date(now);
       weekEnd.setDate(now.getDate() + (7 - now.getDay()));
-      const [company, openTasks, overdue, dueThisWeek, blocked, workload, activity] =
-        await Promise.all([
-          prisma.company.findFirst({
-            where: { id: companyId },
-            select: { name: true, trialEndsAt: true },
-          }),
-          prisma.task.count({
-            where: {
-              ...taskAssigneeFilter,
-              deletedAt: null,
-              status: { not: "done" },
-            },
-          }),
-          prisma.task.count({
-            where: {
-              ...taskAssigneeFilter,
-              deletedAt: null,
-              status: { not: "done" },
-              dueAt: { lt: now },
-            },
-          }),
-          prisma.task.count({
-            where: {
-              ...taskAssigneeFilter,
-              deletedAt: null,
-              status: { not: "done" },
-              dueAt: { gte: now, lte: weekEnd },
-            },
-          }),
-          prisma.task.count({
-            where: {
-              ...taskAssigneeFilter,
-              deletedAt: null,
-              status: "blocked",
-            },
-          }),
-          prisma.employee.findMany({
-            where: {
-              status: "active",
-              deletedAt: null,
-              ...(scopedEmployeeIds ? { id: { in: scopedEmployeeIds } } : {}),
-            },
-            select: {
-              id: true,
-              membership: { select: { user: { select: { name: true } } } },
-              assignedTasks: {
-                where: {
-                  ...taskAssigneeFilter,
-                  deletedAt: null,
-                  status: { not: "done" },
-                },
-                select: { dueAt: true },
+      const [
+        company,
+        openTasks,
+        overdue,
+        dueThisWeek,
+        blocked,
+        recentCompletedTasks,
+        workload,
+        activity,
+      ] = await Promise.all([
+        prisma.company.findFirst({
+          where: { id: companyId },
+          select: { name: true, trialEndsAt: true },
+        }),
+        prisma.task.count({
+          where: {
+            ...taskAssigneeFilter,
+            deletedAt: null,
+            status: { not: "done" },
+          },
+        }),
+        prisma.task.count({
+          where: {
+            ...taskAssigneeFilter,
+            deletedAt: null,
+            status: { not: "done" },
+            dueAt: { lt: now },
+          },
+        }),
+        prisma.task.count({
+          where: {
+            ...taskAssigneeFilter,
+            deletedAt: null,
+            status: { not: "done" },
+            dueAt: { gte: now, lte: weekEnd },
+          },
+        }),
+        prisma.task.count({
+          where: {
+            ...taskAssigneeFilter,
+            deletedAt: null,
+            status: "blocked",
+          },
+        }),
+        prisma.task.findMany({
+          where: {
+            ...taskAssigneeFilter,
+            deletedAt: null,
+            status: "done",
+            dueAt: { not: null },
+            completedAt: { gte: new Date(now.getTime() - 30 * 86400000), lte: now },
+          },
+          select: { dueAt: true, completedAt: true },
+        }),
+        prisma.employee.findMany({
+          where: {
+            status: "active",
+            deletedAt: null,
+            ...(scopedEmployeeIds ? { id: { in: scopedEmployeeIds } } : {}),
+          },
+          select: {
+            id: true,
+            membership: { select: { user: { select: { name: true } } } },
+            assignedTasks: {
+              where: {
+                ...taskAssigneeFilter,
+                deletedAt: null,
+                status: { not: "done" },
               },
+              select: { dueAt: true },
             },
-          }),
-          prisma.activityLog.findMany({
-            orderBy: { createdAt: "desc" },
-            take: 5,
-            select: { id: true, action: true, createdAt: true },
-          }),
-        ]);
+          },
+        }),
+        prisma.activityLog.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { id: true, action: true, createdAt: true },
+        }),
+      ]);
+      const onTimeCompletionRate = calculateOnTimeCompletionRate(
+        recentCompletedTasks,
+        now,
+      );
       const trialDays = company?.trialEndsAt
         ? Math.max(
             0,
@@ -113,7 +139,7 @@ export function createDashboardRouter() {
       response.json({
         companyName: company?.name ?? null,
         trialDays,
-        metrics: { openTasks, overdue, dueThisWeek, blocked },
+        metrics: { openTasks, overdue, dueThisWeek, blocked, onTimeCompletionRate },
         workload: workload.map((employee) => ({
           id: employee.id,
           name: employee.membership.user.name,

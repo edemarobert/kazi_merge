@@ -13,6 +13,7 @@ type DashboardData = {
     overdue: number;
     dueThisWeek: number;
     blocked: number;
+    onTimeCompletionRate: number | null;
   };
   workload: { id: string; name: string; open: number; overdue: number }[];
   activity: { id: string; action: string; createdAt: string }[];
@@ -21,7 +22,13 @@ type DashboardData = {
 const emptyData: DashboardData = {
   companyName: null,
   trialDays: null,
-  metrics: { openTasks: 0, overdue: 0, dueThisWeek: 0, blocked: 0 },
+  metrics: {
+    openTasks: 0,
+    overdue: 0,
+    dueThisWeek: 0,
+    blocked: 0,
+    onTimeCompletionRate: null,
+  },
   workload: [],
   activity: [],
 };
@@ -82,6 +89,11 @@ export default function HomePage() {
           <Metric
             label={translations.dashboard.metrics.blocked}
             value={data.metrics.blocked}
+          />{" "}
+          <Metric
+            label={translations.dashboard.metrics.onTimeCompletion}
+            value={data.metrics.onTimeCompletionRate}
+            suffix="%"
           />
         </section>
 
@@ -126,11 +138,19 @@ export default function HomePage() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({
+  label,
+  value,
+  suffix = "",
+}: {
+  label: string;
+  value: number | null;
+  suffix?: string;
+}) {
   return (
     <article className="metric-card">
       <span>{label}</span>
-      <strong>{value}</strong>
+      <strong>{value === null ? "—" : `${value}${suffix}`}</strong>
     </article>
   );
 }

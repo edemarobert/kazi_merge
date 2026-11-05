@@ -14,6 +14,7 @@ export const translations = {
       dueThisWeekHint: "Keep work moving",
       blocked: "Blocked",
       blockedHint: "Waiting for a next step",
+      onTimeCompletion: "On-time completion (30 days)",
     },
     workload: "Workload",
     teamView: "Team view",

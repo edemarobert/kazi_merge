@@ -50,3 +50,31 @@ export function dashboardTaskAssigneeFilter(scopedEmployeeIds: string[] | null):
 } {
   return scopedEmployeeIds ? { assigneeEmployeeId: { in: scopedEmployeeIds } } : {};
 }
+export type CompletedDashboardTask = {
+  dueAt: Date | null;
+  completedAt: Date | null;
+};
+
+export function calculateOnTimeCompletionRate(
+  tasks: CompletedDashboardTask[],
+  now: Date,
+): number | null {
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const completedWithDueDates = tasks.filter(
+    (task) =>
+      task.dueAt !== null &&
+      task.completedAt !== null &&
+      task.completedAt >= thirtyDaysAgo &&
+      task.completedAt <= now,
+  );
+
+  if (completedWithDueDates.length === 0) {
+    return null;
+  }
+
+  const onTime = completedWithDueDates.filter(
+    (task) => task.completedAt! <= task.dueAt!,
+  ).length;
+  return Math.round((onTime / completedWithDueDates.length) * 100);
+}

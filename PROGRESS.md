@@ -2,9 +2,9 @@
 
 ## Current task
 
-- Milestone 3, Tasks 1–4 are complete and verified.
+- Milestone 3, Tasks 1–5 are complete and verified.
 - Awaiting explicit product-owner approval before beginning Milestone 3,
-  Task 5 (30-day on-time completion rate).
+  Task 6 (recent activity feed).
 
 ## Active remediation
 
@@ -108,7 +108,7 @@
 - [x] Add open-task and overdue counts.
 - [x] Add due-this-week and blocked-task views.
 - [x] Add per-person workload indicators.
-- [ ] Calculate 30-day on-time completion rate.
+- [x] Calculate 30-day on-time completion rate.
 - [ ] Add the recent activity feed.
 - [ ] Link dashboard counts to filtered task lists.
 - [ ] Add loading, empty, and error states.

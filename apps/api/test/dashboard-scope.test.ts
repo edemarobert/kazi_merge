@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { MembershipRole } from "@prisma/client";
 import {
+  calculateOnTimeCompletionRate,
   dashboardTaskAssigneeFilter,
   selectDashboardEmployeeIds,
 } from "../src/dashboard/scope.js";
@@ -38,4 +39,38 @@ test("dashboard task counts use the manager workload scope", () => {
   assert.deepEqual(dashboardTaskAssigneeFilter(["manager", "report"]), {
     assigneeEmployeeId: { in: ["manager", "report"] },
   });
+});
+test("on-time completion rate uses due-dated completions from the last 30 days", () => {
+  const now = new Date("2026-11-30T12:00:00.000Z");
+  assert.equal(
+    calculateOnTimeCompletionRate(
+      [
+        {
+          dueAt: new Date("2026-11-20T12:00:00.000Z"),
+          completedAt: new Date("2026-11-19T12:00:00.000Z"),
+        },
+        {
+          dueAt: new Date("2026-11-20T12:00:00.000Z"),
+          completedAt: new Date("2026-11-21T12:00:00.000Z"),
+        },
+        { dueAt: null, completedAt: new Date("2026-11-22T12:00:00.000Z") },
+        {
+          dueAt: new Date("2026-10-01T12:00:00.000Z"),
+          completedAt: new Date("2026-10-02T12:00:00.000Z"),
+        },
+      ],
+      now,
+    ),
+    50,
+  );
+});
+
+test("on-time completion rate is empty when no due-dated task qualifies", () => {
+  assert.equal(
+    calculateOnTimeCompletionRate(
+      [{ dueAt: null, completedAt: new Date("2026-11-20T12:00:00.000Z") }],
+      new Date("2026-11-30T12:00:00.000Z"),
+    ),
+    null,
+  );
 });
