@@ -95,6 +95,8 @@ export type TaskListFilters = {
   status?: TaskStatus;
   priority?: TaskPriority;
   overdue?: boolean;
+  open?: boolean;
+  dueThisWeek?: boolean;
   assigneeEmployeeId?: string;
 };
 
@@ -123,6 +125,18 @@ export function parseTaskListFilters(
       return { error: "overdue must be true or false." };
     }
     filters.overdue = query.overdue === "true";
+  }
+  if (query.open !== undefined) {
+    if (query.open !== "true" && query.open !== "false") {
+      return { error: "open must be true or false." };
+    }
+    filters.open = query.open === "true";
+  }
+  if (query.dueThisWeek !== undefined) {
+    if (query.dueThisWeek !== "true" && query.dueThisWeek !== "false") {
+      return { error: "dueThisWeek must be true or false." };
+    }
+    filters.dueThisWeek = query.dueThisWeek === "true";
   }
   if (query.assigneeEmployeeId !== undefined) {
     if (

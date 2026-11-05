@@ -59,6 +59,8 @@ test("task list filters validate status, priority, and overdue values", () => {
       status: "blocked",
       priority: "high",
       overdue: "true",
+      open: "true",
+      dueThisWeek: "true",
       assigneeEmployeeId: " employee-1 ",
     }),
     {
@@ -66,6 +68,8 @@ test("task list filters validate status, priority, and overdue values", () => {
         status: TaskStatus.blocked,
         priority: "high",
         overdue: true,
+        open: true,
+        dueThisWeek: true,
         assigneeEmployeeId: "employee-1",
       },
     },
@@ -78,6 +82,12 @@ test("task list filters validate status, priority, and overdue values", () => {
   });
   assert.deepEqual(parseTaskListFilters({ overdue: "yes" }), {
     error: "overdue must be true or false.",
+  });
+  assert.deepEqual(parseTaskListFilters({ open: "sometimes" }), {
+    error: "open must be true or false.",
+  });
+  assert.deepEqual(parseTaskListFilters({ dueThisWeek: "sometimes" }), {
+    error: "dueThisWeek must be true or false.",
   });
 });
 

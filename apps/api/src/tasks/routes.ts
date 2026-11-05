@@ -97,6 +97,9 @@ export function createTasksRouter() {
         return;
       }
       const { filters } = parsedFilters;
+      const now = new Date();
+      const weekEnd = new Date(now);
+      weekEnd.setDate(now.getDate() + (7 - now.getDay()));
       const tasks = await prisma.task.findMany({
         where: {
           deletedAt: null,
@@ -105,9 +108,11 @@ export function createTasksRouter() {
           ...(filters.assigneeEmployeeId
             ? { assigneeEmployeeId: filters.assigneeEmployeeId }
             : {}),
-          ...(filters.overdue
-            ? { dueAt: { lt: new Date() }, status: { not: TaskStatus.done } }
+          ...(filters.open || filters.dueThisWeek || filters.overdue
+            ? { status: { not: TaskStatus.done } }
             : {}),
+          ...(filters.overdue ? { dueAt: { lt: now } } : {}),
+          ...(filters.dueThisWeek ? { dueAt: { gte: now, lte: weekEnd } } : {}),
         },
         include: taskInclude,
         orderBy: [{ dueAt: "asc" }, { createdAt: "desc" }],

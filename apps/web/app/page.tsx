@@ -77,18 +77,22 @@ export default function HomePage() {
           <Metric
             label={translations.dashboard.metrics.openTasks}
             value={data.metrics.openTasks}
+            href="/tasks?open=true"
           />
           <Metric
             label={translations.dashboard.metrics.overdue}
             value={data.metrics.overdue}
+            href="/tasks?overdue=true"
           />
           <Metric
             label={translations.dashboard.metrics.dueThisWeek}
             value={data.metrics.dueThisWeek}
+            href="/tasks?dueThisWeek=true"
           />
           <Metric
             label={translations.dashboard.metrics.blocked}
             value={data.metrics.blocked}
+            href="/tasks?status=blocked"
           />{" "}
           <Metric
             label={translations.dashboard.metrics.onTimeCompletion}
@@ -144,16 +148,26 @@ function Metric({
   label,
   value,
   suffix = "",
+  href,
 }: {
   label: string;
   value: number | null;
   suffix?: string;
+  href?: string;
 }) {
-  return (
-    <article className="metric-card">
+  const content = (
+    <>
       <span>{label}</span>
-      <strong>{value === null ? "—" : `${value}${suffix}`}</strong>
-    </article>
+      <strong>{value === null ? "N/A" : `${value}${suffix}`}</strong>
+    </>
+  );
+
+  return href ? (
+    <Link className="metric-card" href={href}>
+      {content}
+    </Link>
+  ) : (
+    <article className="metric-card">{content}</article>
   );
 }
 

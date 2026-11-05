@@ -17,11 +17,22 @@ type Task = {
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 
+function initialQueryParam(name: string): string {
+  if (typeof window === "undefined") return "";
+  return new URLSearchParams(window.location.search).get(name) ?? "";
+}
+
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
-  const [overdueOnly, setOverdueOnly] = useState(false);
+  const [overdueOnly, setOverdueOnly] = useState(
+    () => initialQueryParam("overdue") === "true",
+  );
+  const [openOnly, setOpenOnly] = useState(() => initialQueryParam("open") === "true");
+  const [dueThisWeekOnly, setDueThisWeekOnly] = useState(
+    () => initialQueryParam("dueThisWeek") === "true",
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -30,6 +41,8 @@ export default function TasksPage() {
     if (status) query.set("status", status);
     if (priority) query.set("priority", priority);
     if (overdueOnly) query.set("overdue", "true");
+    if (openOnly) query.set("open", "true");
+    if (dueThisWeekOnly) query.set("dueThisWeek", "true");
     const queryString = query.toString();
     setLoading(true);
     setError(false);
@@ -43,7 +56,7 @@ export default function TasksPage() {
       .then((data) => setTasks(data.tasks))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [overdueOnly, priority, status]);
+  }, [dueThisWeekOnly, openOnly, overdueOnly, priority, status]);
 
   return (
     <AppShell>
@@ -92,6 +105,22 @@ export default function TasksPage() {
               onChange={(event) => setOverdueOnly(event.target.checked)}
             />
             Overdue only
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={openOnly}
+              onChange={(event) => setOpenOnly(event.target.checked)}
+            />
+            Open only
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={dueThisWeekOnly}
+              onChange={(event) => setDueThisWeekOnly(event.target.checked)}
+            />
+            Due this week
           </label>
         </section>
         <section className="panel" aria-label="Task list">
