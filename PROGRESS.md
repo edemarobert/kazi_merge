@@ -164,8 +164,8 @@
 - [x] Add incremental Calendar authorization.
 - [x] Implement one-way task due-date Calendar sync.
 - [x] Update and remove Calendar events on task changes.
-- [ ] Implement secure Google disconnect and token removal.
-- [ ] Integrate the narrow-scope Google Drive Picker.
+- [x] Implement secure Google disconnect and token removal.
+- [x] Integrate the narrow-scope Google Drive Picker.
 - [ ] Store Drive file metadata and links only.
 - [ ] Implement Google Sheets import.
 - [ ] Reuse CSV preview and per-row validation for Sheets.

@@ -4,6 +4,7 @@ import {
   createGoogleOAuthClient,
   createGoogleState,
   googleCalendarScope,
+  googleDriveScope,
   googleScopesText,
   readGoogleState,
   revokeGoogleToken,
@@ -104,4 +105,35 @@ test("Google disconnect revokes the stored token", async () => {
 
   assert.equal(request?.method, "POST");
   assert.equal((request?.body as URLSearchParams).get("token"), "refresh-token");
+});
+
+test("Drive authorization requests only the narrow drive.file scope", () => {
+  const state = createGoogleState(config.stateSecret, 1_000, "drive");
+  const url = new URL(
+    createGoogleOAuthClient({
+      ...config,
+      driveRedirectUri:
+        "http://localhost:4000/api/v1/integrations/google/drive/callback",
+    }).authorizationUrl(state, [googleDriveScope], "consent", true),
+  );
+
+  assert.equal(url.searchParams.get("scope"), googleDriveScope);
+  assert.equal(url.searchParams.get("include_granted_scopes"), "true");
+  assert.equal(readGoogleState(state, config.stateSecret, 1_001)?.purpose, "drive");
+});
+
+test("Drive access token refresh returns only a short-lived access token", async () => {
+  const client = createGoogleOAuthClient(
+    config,
+    async () =>
+      ({
+        ok: true,
+        json: async () => ({ access_token: "drive-access-token" }),
+      }) as Response,
+  );
+
+  assert.equal(
+    await client.refreshAccessToken("drive-refresh-token"),
+    "drive-access-token",
+  );
 });

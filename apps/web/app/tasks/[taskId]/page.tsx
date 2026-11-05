@@ -27,6 +27,46 @@ type Task = {
   updates: Update[];
 };
 
+type PickerDocument = {
+  id?: string;
+  name?: string;
+  url?: string;
+  mimeType?: string;
+};
+
+type PickerData = {
+  action?: string;
+  docs?: PickerDocument[];
+};
+
+type PickerView = {
+  setMimeTypes(mimeTypes: string): PickerView;
+};
+
+type PickerBuilder = {
+  setDeveloperKey(key: string): PickerBuilder;
+  setOAuthToken(token: string): PickerBuilder;
+  addView(view: PickerView): PickerBuilder;
+  setCallback(callback: (data: PickerData) => void): PickerBuilder;
+  build(): { setVisible(visible: boolean): void };
+};
+
+type GooglePickerNamespace = {
+  Action: { PICKED: string };
+  DocsView: new () => PickerView;
+  PickerBuilder: new () => PickerBuilder;
+};
+
+declare global {
+  interface Window {
+    gapi?: {
+      load(name: string, options: { callback: () => void }): void;
+    };
+    google?: {
+      picker?: GooglePickerNamespace;
+    };
+  }
+}
 const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 
 export default function TaskDetailPage({
@@ -40,6 +80,8 @@ export default function TaskDetailPage({
   const [attachment, setAttachment] = useState<File | null>(null);
   const [driveName, setDriveName] = useState("");
   const [driveUrl, setDriveUrl] = useState("");
+  const [driveFileId, setDriveFileId] = useState("");
+  const [pickerLoading, setPickerLoading] = useState(false);
   const [blockedReason, setBlockedReason] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<Task["status"]>("todo");
   const [savingStatus, setSavingStatus] = useState(false);
@@ -103,6 +145,71 @@ export default function TaskDetailPage({
     setComment("");
     setAttachment(null);
   }
+  async function chooseDriveFile() {
+    setPickerLoading(true);
+    setError(false);
+    const response = await fetch(apiBase + "/api/v1/integrations/google/drive/token", {
+      credentials: "include",
+    });
+    if (!response.ok) {
+      setPickerLoading(false);
+      setError(true);
+      return;
+    }
+    const pickerConfig = (await response.json()) as {
+      accessToken: string;
+      developerKey: string;
+    };
+
+    const openPicker = () => {
+      const picker = window.google?.picker;
+      if (!picker) {
+        setPickerLoading(false);
+        setError(true);
+        return;
+      }
+      const view = new picker.DocsView().setMimeTypes(
+        "application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet,application/vnd.google-apps.presentation,application/pdf",
+      );
+      new picker.PickerBuilder()
+        .setDeveloperKey(pickerConfig.developerKey)
+        .setOAuthToken(pickerConfig.accessToken)
+        .addView(view)
+        .setCallback((data) => {
+          if (data.action === picker.Action.PICKED && data.docs?.[0]) {
+            const file = data.docs[0];
+            setDriveFileId(file.id ?? "");
+            setDriveName(file.name ?? "");
+            setDriveUrl(file.url ?? "");
+          }
+          setPickerLoading(false);
+        })
+        .build()
+        .setVisible(true);
+    };
+
+    if (window.google?.picker) {
+      openPicker();
+      return;
+    }
+
+    const existingScript = document.getElementById("google-picker-script");
+    if (existingScript) {
+      window.gapi?.load("picker", { callback: openPicker });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = "google-picker-script";
+    script.src = "https://apis.google.com/js/api.js";
+    script.async = true;
+    script.onload = () => window.gapi?.load("picker", { callback: openPicker });
+    script.onerror = () => {
+      setPickerLoading(false);
+      setError(true);
+    };
+    document.body.appendChild(script);
+  }
   async function addDriveLink() {
     const response = await fetch(
       `${apiBase}/api/v1/tasks/${taskId}/comments/drive-links`,
@@ -110,7 +217,7 @@ export default function TaskDetailPage({
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: driveName, url: driveUrl }),
+        body: JSON.stringify({ name: driveName, url: driveUrl, driveFileId }),
       },
     );
     if (!response.ok) {
@@ -288,6 +395,14 @@ export default function TaskDetailPage({
               >
                 Upload attachment
               </button>
+              <button
+                className="button button-secondary"
+                type="button"
+                onClick={chooseDriveFile}
+                disabled={pickerLoading}
+              >
+                {pickerLoading ? "Opening Drive..." : "Choose from Google Drive"}
+              </button>{" "}
               <label>
                 Drive file name
                 <input

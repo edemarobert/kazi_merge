@@ -6,9 +6,12 @@ import { errorHandler } from "./middleware/error-handler.js";
 import { authContextMiddleware } from "./middleware/auth-context.js";
 import { createGoogleAuthRouter } from "./auth/google-routes.js";
 import { createGoogleCalendarRouter } from "./auth/google-calendar-routes.js";
+import { createGoogleDriveRouter } from "./auth/google-drive-routes.js";
 import { createPasswordlessAuthRouter } from "./auth/passwordless-routes.js";
 import {
   completeGoogleCalendarAuthorization,
+  completeGoogleDriveAuthorization,
+  createGoogleDriveAccessToken,
   disconnectGoogleCalendar,
   completeGoogleIdentity,
   completePasswordlessIdentity,
@@ -76,6 +79,15 @@ export function createApp() {
         completeGoogleCalendarAuthorization(userId, companyId, { refreshToken }),
       onDisconnect: ({ userId, companyId }) =>
         disconnectGoogleCalendar(userId, companyId),
+    }),
+  );
+  app.use(
+    "/api/v1/integrations/google",
+    createGoogleDriveRouter({
+      onAuthorization: ({ userId, companyId, refreshToken }) =>
+        completeGoogleDriveAuthorization(userId, companyId, { refreshToken }),
+      onAccessToken: ({ userId, companyId }) =>
+        createGoogleDriveAccessToken(userId, companyId),
     }),
   );
   app.use("/api/v1/companies", createCompanyRouter());

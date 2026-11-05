@@ -6,15 +6,18 @@ const tokenInfoEndpoint = "https://oauth2.googleapis.com/tokeninfo";
 const googleScopes = ["openid", "email", "profile"] as const;
 export const googleIdentityScopes = [...googleScopes];
 export const googleCalendarScope = "https://www.googleapis.com/auth/calendar.events";
+export const googleDriveScope = "https://www.googleapis.com/auth/drive.file";
 const stateLifetimeSeconds = 10 * 60;
 
-export type GoogleAuthorizationPurpose = "sign_in" | "calendar";
+export type GoogleAuthorizationPurpose = "sign_in" | "calendar" | "drive";
 
 export type GoogleConfig = {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
   calendarRedirectUri?: string;
+  driveRedirectUri?: string;
+  pickerApiKey?: string;
   stateSecret: string;
 };
 
@@ -27,6 +30,10 @@ export type GoogleIdentity = {
 };
 
 export type GoogleCalendarToken = {
+  refreshToken?: string;
+};
+
+export type GoogleDriveToken = {
   refreshToken?: string;
 };
 
@@ -45,6 +52,8 @@ export function readGoogleConfig(
     clientSecret,
     redirectUri,
     calendarRedirectUri: environment.GOOGLE_CALENDAR_REDIRECT_URI,
+    driveRedirectUri: environment.GOOGLE_DRIVE_REDIRECT_URI,
+    pickerApiKey: environment.GOOGLE_PICKER_API_KEY,
     stateSecret,
   };
 }
@@ -95,7 +104,9 @@ export function readGoogleState(
       !payload.nonce ||
       !payload.expiresAt ||
       payload.expiresAt <= now ||
-      (payload.purpose !== "sign_in" && payload.purpose !== "calendar")
+      (payload.purpose !== "sign_in" &&
+        payload.purpose !== "calendar" &&
+        payload.purpose !== "drive")
     ) {
       return null;
     }
@@ -211,6 +222,50 @@ export function createGoogleOAuthClient(
         refresh_token?: string;
       };
       return { refreshToken: tokenBody.refresh_token };
+    },
+
+    async exchangeDriveCode(code: string): Promise<GoogleDriveToken> {
+      const tokenResponse = await fetcher(tokenEndpoint, {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          code,
+          client_id: config.clientId,
+          client_secret: config.clientSecret,
+          redirect_uri: config.redirectUri,
+          grant_type: "authorization_code",
+        }),
+      });
+      if (!tokenResponse.ok) {
+        throw new Error("Google Drive authorization failed.");
+      }
+      const tokenBody = (await tokenResponse.json()) as {
+        refresh_token?: string;
+      };
+      return { refreshToken: tokenBody.refresh_token };
+    },
+
+    async refreshAccessToken(refreshToken: string): Promise<string> {
+      const tokenResponse = await fetcher(tokenEndpoint, {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: config.clientId,
+          client_secret: config.clientSecret,
+          refresh_token: refreshToken,
+          grant_type: "refresh_token",
+        }),
+      });
+      if (!tokenResponse.ok) {
+        throw new Error("Google access token refresh failed.");
+      }
+      const tokenBody = (await tokenResponse.json()) as {
+        access_token?: string;
+      };
+      if (!tokenBody.access_token) {
+        throw new Error("Google did not return an access token.");
+      }
+      return tokenBody.access_token;
     },
   };
 }

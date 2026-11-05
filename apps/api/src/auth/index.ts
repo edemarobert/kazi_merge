@@ -1,11 +1,14 @@
 import { prisma } from "../db/prisma.js";
 import { companyId, runWithCompanyContextAsync } from "../context/company-context.js";
 import { createSessionService } from "./session.js";
+import { createGoogleOAuthClient, readGoogleConfig } from "./google.js";
 import {
   googleCalendarScope,
+  googleDriveScope,
   googleIdentityScopes,
   revokeGoogleToken,
   type GoogleCalendarToken,
+  type GoogleDriveToken,
   type GoogleIdentity,
 } from "./google.js";
 import { decryptIntegrationToken, encryptIntegrationToken } from "./token-crypto.js";
@@ -99,6 +102,75 @@ async function completeUserIdentity(userId: string) {
     companyId: membership.companyId,
     sessionToken: await sessionService.create(userId, membership.companyId),
   };
+}
+
+export async function completeGoogleDriveAuthorization(
+  userId: string,
+  activeCompanyId: string,
+  token: GoogleDriveToken,
+): Promise<void> {
+  await runWithCompanyContextAsync(
+    companyId(activeCompanyId),
+    async () => {
+      const account = await prisma.integrationAccount.findFirst({
+        where: {
+          companyId: activeCompanyId,
+          userId,
+          provider: "google",
+        },
+        select: { id: true, scopes: true },
+      });
+      if (!account) {
+        throw new Error("Connect Google sign-in before enabling Drive.");
+      }
+
+      await prisma.integrationAccount.update({
+        where: {
+          id_companyId: { id: account.id, companyId: activeCompanyId },
+        },
+        data: {
+          ...(token.refreshToken
+            ? { encryptedToken: encryptIntegrationToken(token.refreshToken) }
+            : {}),
+          scopes: [...new Set([...account.scopes, googleDriveScope])],
+          status: "active",
+        },
+      });
+    },
+    userId,
+  );
+}
+
+export async function createGoogleDriveAccessToken(
+  userId: string,
+  activeCompanyId: string,
+  fetcher: typeof fetch = fetch,
+): Promise<string> {
+  const config = readGoogleConfig();
+  if (!config) throw new Error("Google Drive is not configured.");
+  return runWithCompanyContextAsync(
+    companyId(activeCompanyId),
+    async () => {
+      const account = await prisma.integrationAccount.findFirst({
+        where: {
+          companyId: activeCompanyId,
+          userId,
+          provider: "google",
+          status: "active",
+          scopes: { has: googleDriveScope },
+          encryptedToken: { not: null },
+        },
+        select: { encryptedToken: true },
+      });
+      if (!account?.encryptedToken) {
+        throw new Error("Google Drive is not connected.");
+      }
+      return createGoogleOAuthClient(config, fetcher).refreshAccessToken(
+        decryptIntegrationToken(account.encryptedToken),
+      );
+    },
+    userId,
+  );
 }
 
 export async function completeGoogleCalendarAuthorization(
