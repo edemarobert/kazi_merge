@@ -66,12 +66,19 @@ export function createDashboardRouter() {
           }),
           prisma.task.count({
             where: {
+              ...taskAssigneeFilter,
               deletedAt: null,
               status: { not: "done" },
               dueAt: { gte: now, lte: weekEnd },
             },
           }),
-          prisma.task.count({ where: { deletedAt: null, status: "blocked" } }),
+          prisma.task.count({
+            where: {
+              ...taskAssigneeFilter,
+              deletedAt: null,
+              status: "blocked",
+            },
+          }),
           prisma.employee.findMany({
             where: {
               status: "active",
