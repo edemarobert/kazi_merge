@@ -121,6 +121,7 @@ export function createDashboardRouter() {
           },
         }),
         prisma.activityLog.findMany({
+          where: { companyId },
           orderBy: { createdAt: "desc" },
           take: 5,
           select: {

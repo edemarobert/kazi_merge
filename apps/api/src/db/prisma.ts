@@ -22,7 +22,7 @@ type QueryArgs = {
   data?: Record<string, unknown> | Record<string, unknown>[];
 };
 
-function scopeWhere(
+export function scopeWhere(
   where: Record<string, unknown> | undefined,
 ): Record<string, unknown> {
   const currentCompanyId = requireCompanyId();
@@ -68,10 +68,10 @@ export function createPrismaClient() {
           requireCompanyId();
 
           const scopedArgs = { ...(args as QueryArgs) };
-          if (
-            ["findUnique", "findUniqueOrThrow"].includes(operation) &&
-            scopedArgs.where
-          ) {
+          if (["findUnique", "findUniqueOrThrow"].includes(operation)) {
+            if (!scopedArgs.where) {
+              throw new Error("A unique business query requires a where clause.");
+            }
             scopedArgs.where = scopeWhere(scopedArgs.where);
             return query(scopedArgs);
           }
@@ -85,9 +85,10 @@ export function createPrismaClient() {
               "groupBy",
               "deleteMany",
               "updateMany",
-            ].includes(operation) &&
-            scopedArgs.where
+            ].includes(operation)
           ) {
+            // A missing where clause must never become a cross-tenant scan.
+            // scopeWhere(undefined) intentionally produces { companyId }.
             scopedArgs.where = scopeWhere(scopedArgs.where);
           }
           if (

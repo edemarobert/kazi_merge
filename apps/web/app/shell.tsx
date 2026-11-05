@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const desktopNavigation = [
   { label: "Dashboard", href: "/" },
@@ -49,6 +50,31 @@ function NavigationLink({
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/v1/notifications", { credentials: "include" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!active) return;
+        const notifications = Array.isArray(payload?.notifications)
+          ? payload.notifications
+          : [];
+        setNotificationCount(
+          notifications.filter(
+            (item: { status?: string }) =>
+              item.status === "queued" || item.status === "sent",
+          ).length,
+        );
+      })
+      .catch(() => {
+        if (active) setNotificationCount(0);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
   return (
     <div className="app-shell">
       <aside className="sidebar" aria-label="Primary navigation">
@@ -81,6 +107,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               K
             </span>
             <span>Kazi Merge</span>
+          </Link>
+          <Link
+            className="profile-button"
+            href="/notifications"
+            aria-label="Notifications"
+          >
+            Notifications ({notificationCount})
           </Link>
           <button
             className="profile-button"

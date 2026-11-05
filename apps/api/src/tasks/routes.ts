@@ -2,6 +2,8 @@ import { Prisma, TaskStatus, TaskUpdateKind } from "@prisma/client";
 import { Router } from "express";
 import { getActorUserId, requireCompanyId } from "../context/company-context.js";
 import { prisma } from "../db/prisma.js";
+import { createBullMqNotificationQueue } from "../notifications/queue.js";
+import { taskAssignedEvent } from "../notifications/jobs.js";
 import { requirePolicy } from "../policy/policy.js";
 import { PolicyDeniedError } from "../policy/policy.js";
 import { attachmentUpload, saveAttachment } from "./attachments.js";
@@ -84,6 +86,9 @@ async function writeActivity(
 }
 
 export function createTasksRouter() {
+  const notificationQueue = process.env.REDIS_URL
+    ? createBullMqNotificationQueue(process.env.REDIS_URL)
+    : null;
   const router = Router();
 
   router.get("/", async (request, response, next) => {
@@ -149,7 +154,7 @@ export function createTasksRouter() {
           status: "active",
           deletedAt: null,
         },
-        select: { id: true },
+        select: { id: true, membership: { select: { userId: true } } },
       });
       if (!assignee) {
         response.status(400).json({
@@ -197,6 +202,16 @@ export function createTasksRouter() {
         },
         include: taskInclude,
       });
+      if (notificationQueue) {
+        await notificationQueue.enqueue({
+          event: taskAssignedEvent({
+            companyId: requireCompanyId(),
+            recipientUserId: assignee.membership.userId,
+            taskId: task.id,
+            payload: { title: task.title, dueAt: task.dueAt },
+          }),
+        });
+      }
       await writeActivity("task.created", task.id, {
         title: task.title,
         assigneeEmployeeId: input.assigneeEmployeeId,

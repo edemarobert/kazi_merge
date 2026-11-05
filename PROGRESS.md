@@ -2,9 +2,8 @@
 
 ## Current task
 
-- Milestone 3, Tasks 1–10 acceptance review is complete with one remaining evidence gap.
-- Awaiting explicit product-owner approval before beginning Milestone 4,
-  Task 1 (define notification events and delivery records).
+- Milestone 3 is approved. Milestone 4 notification tasks 1-10 are implemented sequentially and under validation.
+- Assignment events enqueue tenant-scoped jobs when REDIS_URL is configured; the worker owns delivery and retry handling.
 - Dashboard loading, empty, and error states now have Playwright browser coverage.
 
 ## Active remediation
@@ -14,6 +13,7 @@
 - [x] Encrypt integration tokens at rest.
 - [x] Enforce owner-only removal and sanitized teammate profiles.
 - [x] Connect CSV import and dashboard UI to scoped API data.
+- [x] Harden dashboard tenant isolation and replace static People, Teams, and profile views with live API data.
 - [x] Update [MILESTONE_1_REVIEW.md](MILESTONE_1_REVIEW.md) with remediation
       evidence and remaining gaps.
 
@@ -90,7 +90,6 @@
 - [x] Add Google Drive link attachment contracts.
 - [x] Verify M4, M5, and M9 acceptance criteria.
 
-
 - **Task 5 status:** Complete for the initial app conversation thread. The task detail view loads the task timeline in chronological order and presents the conversation area.
 - **Task 6 status:** Complete. Comments are validated and persisted as task updates, status changes append authored status events, and both actions write append-only activity rows. Update responses and the task timeline include the author.
 - **Task 6 validation:** Focused API tests pass; web/API typecheck, lint, and formatting pass. The live PostgreSQL isolation test passes after local migration and seed setup.
@@ -116,21 +115,26 @@
 - [x] Benchmark 50 employees and 2,000 tasks.
 - [x] Verify M6 acceptance criteria.
 - **Task 10 status:** M6 acceptance review complete. The dashboard benchmark ran against 50 employees and 2,000 tasks with a 126.03 ms p95 API response, and dashboard counts matched the linked filtered task-list responses.
-- **Task 10 validation:** Production build passed; formatting, lint, typecheck, 45 API tests, and 3 Playwright dashboard tests passed. Manager scope selection is covered by [dashboard-scope.test.ts](apps/api/test/dashboard-scope.test.ts).
+- **Task 10 validation:** Production build passed; formatting, typecheck, and format checks passed; 47 API tests and 3 Playwright dashboard tests passed. The hardening regression tests prove missing business `where` clauses receive the active company predicate and empty unique selectors are rejected.
+- **Task 10 hardening follow-up:** The dashboard activity feed now has an explicit company predicate, blocked counts exclude soft-deleted tasks, the Blocked counter initializes the task status filter, and People, Teams, and employee profiles load from scoped APIs.
 - **Task 10 remaining evidence gap:** An authenticated manager route/browser integration test is still needed to prove the rendered dashboard cannot expose data outside the manager's scope.
 
 ### Milestone 4 — Notification engine
 
-- [ ] Define notification events and delivery records.
-- [ ] Implement the notification router and channel preferences.
-- [ ] Implement the in-app notification channel and bell.
-- [ ] Implement email adapter and delivery handling.
-- [ ] Implement SMS adapter and delivery handling.
-- [ ] Configure Redis, BullMQ, retries, and dead-letter handling.
-- [ ] Move all notification sending into worker jobs.
-- [ ] Add due-soon, overdue, assignment, and comment jobs.
-- [ ] Test fallback behavior and delivery failures.
-- [ ] Verify the non-WhatsApp M7 acceptance criteria.
+- [x] Define notification events and delivery records.
+- **Task 1 status:** Complete. Defined the five approved notification events/templates, four delivery channels, and queued/sent/delivered/failed delivery lifecycle in [contracts.ts](apps/api/src/notifications/contracts.ts).
+- **Task 1 validation:** 49 API tests passed, including notification contract tests; web/API typecheck and formatting passed.
+- **Task 1 boundary:** Notification routing, channel adapters, preferences, queues, retries, and worker delivery were implemented in Tasks 2-7.
+- [x] Implement the notification router and channel preferences.
+- [x] Implement the in-app notification channel and bell.
+- [x] Implement email adapter and delivery handling.
+- [x] Implement SMS adapter and delivery handling.
+- [x] Configure Redis, BullMQ, retries, and dead-letter handling.
+- [x] Move all notification sending into worker jobs.
+- [x] Add due-soon, overdue, assignment, and comment jobs.
+- [x] Test fallback behavior and delivery failures.
+- [x] Verify the non-WhatsApp M7 acceptance criteria.
+- **Milestone 4 validation:** 52 API tests pass, including tenant-scoped fallback delivery and failure recording; API and web typechecks pass. Assignment creation enqueues `task_assigned` only when `REDIS_URL` is configured, and the server starts a tenant-aware BullMQ worker with exponential retries and a dead-letter queue. WhatsApp provider integration and webhook handling remain Milestone 5 scope.
 
 ### Milestone 5 — WhatsApp
 
@@ -208,15 +212,13 @@
 - The Next.js build reports that the Next.js ESLint plugin is not detected in
   the flat ESLint configuration; this is a non-blocking warning to revisit
   when Next-specific lint rules are needed.
-- The company-scoping guard is wired into the Prisma client and authenticated
-  request context; business routes will be added as their modules are built.
+- The company-scoping guard is wired into the Prisma client and authenticated request context; missing collection filters now default to the active company and empty unique selectors are rejected.
 - The role-policy module is framework-neutral and now receives actor identity
   from authenticated request context.
 - Demo seed data is deterministic and idempotent; the local database is seeded.
 - Prisma 6 reports that the package.json seed configuration will need to move
   to prisma.config.ts before a future Prisma 7 upgrade.
-- The PWA shell uses placeholder dashboard data and profile information until
-  authentication and business routes are implemented.
+- The PWA shell still contains placeholder authenticated-user identity data; People, Teams, employee profiles, and dashboard data now load through business APIs.
 - The navigation includes links to future screens; those routes are not
   implemented yet.
 - Session persistence and authenticated request context are implemented, but

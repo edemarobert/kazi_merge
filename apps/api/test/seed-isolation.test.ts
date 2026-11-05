@@ -7,7 +7,7 @@ import {
   runWithCompanyContextAsync,
 } from "../src/context/company-context.js";
 import { CompanyScopeViolation, scopedWhere } from "../src/db/company-scope.js";
-import { prisma } from "../src/db/prisma.js";
+import { createPrismaClient, prisma, scopeWhere } from "../src/db/prisma.js";
 
 test("demo seed data contains two distinct companies", () => {
   assert.equal(demoCompanies.length, 2);
@@ -25,6 +25,25 @@ test("each seeded task belongs to its own company", () => {
   }
 });
 
+test("missing business where clauses are replaced with the active company predicate", () => {
+  const [first] = demoCompanies;
+  const where = runWithCompanyContext(companyId(first.id), () => scopeWhere(undefined));
+
+  assert.deepEqual(where, { companyId: first.id });
+});
+test("unique business queries reject an empty where clause", async () => {
+  const [first] = demoCompanies;
+  const isolatedClient = createPrismaClient();
+
+  await assert.rejects(
+    runWithCompanyContextAsync(
+      companyId(first.id),
+      async () => await isolatedClient.task.findUnique({ where: undefined } as never),
+    ),
+    /requires a where clause/,
+  );
+  await isolatedClient.$disconnect();
+});
 test("a company cannot query the other seeded company's task", () => {
   const [first, second] = demoCompanies;
   assert.throws(

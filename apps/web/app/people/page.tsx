@@ -1,58 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "../shell";
 import { translations } from "../translations";
 
-const employees = [
-  {
-    id: "brian-kato",
-    name: "Brian Kato",
-    initials: "BK",
-    title: "Operations lead",
-    team: "Operations",
-    status: "active",
-  },
-  {
-    id: "grace-atim",
-    name: "Grace Atim",
-    initials: "GA",
-    title: "Client success manager",
-    team: "Customer success",
-    status: "active",
-  },
-  {
-    id: "peter-okello",
-    name: "Peter Okello",
-    initials: "PO",
-    title: "Stock coordinator",
-    team: "Operations",
-    status: "active",
-  },
-  {
-    id: "sarah-namukasa",
-    name: "Sarah Namukasa",
-    initials: "SN",
-    title: "Finance assistant",
-    team: "Finance",
-    status: "inactive",
-  },
-] as const;
+type Employee = {
+  id: string;
+  status: "active" | "inactive";
+  jobTitle: string | null;
+  startDate: string | null;
+  membership: { user: { name: string; email: string | null } };
+  department: { name: string } | null;
+  teamMembers: { team: { name: string } }[];
+};
+
+const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 
 export default function PeoplePage() {
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
-  const filteredEmployees = useMemo(
-    () =>
-      employees.filter((employee) => {
-        const matchesSearch = `${employee.name} ${employee.title}`
-          .toLowerCase()
-          .includes(search.toLowerCase());
-        return matchesSearch && (status === "all" || employee.status === status);
-      }),
-    [search, status],
-  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const query = new URLSearchParams();
+    if (status !== "all") query.set("status", status);
+    if (search.trim()) query.set("search", search.trim());
+    setLoading(true);
+    setError(false);
+    fetch(`${apiBase}/api/v1/people${query.toString() ? `?${query}` : ""}`, {
+      credentials: "include",
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("People unavailable.");
+        return (await response.json()) as { employees: Employee[] };
+      })
+      .then((data) => setEmployees(data.employees))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [search, status]);
+
+  const filteredEmployees = useMemo(() => employees, [employees]);
 
   return (
     <AppShell>
@@ -88,34 +78,53 @@ export default function PeoplePage() {
           </label>
         </section>
 
-        <p className="directory-count">
-          {filteredEmployees.length} {translations.people.peopleCount}
-        </p>
-        <section className="people-grid" aria-label={translations.people.title}>
-          {filteredEmployees.map((employee) => (
-            <Link
-              className="person-card"
-              href={`/people/${employee.id}`}
-              key={employee.id}
-            >
-              <span className="avatar large">{employee.initials}</span>
-              <span className="person-card-copy">
-                <strong>{employee.name}</strong>
-                <span>{employee.title}</span>
-                <small>{employee.team}</small>
-              </span>
-              <span className={`status-pill ${employee.status}`}>
-                {employee.status === "active"
-                  ? translations.people.active
-                  : translations.people.inactive}
-              </span>
-            </Link>
-          ))}
-          {filteredEmployees.length === 0 && (
-            <p className="empty-state">{translations.people.noResults}</p>
-          )}
-        </section>
+        {loading && <p role="status">Loading people...</p>}
+        {error && <p role="alert">People data is unavailable. Please try again.</p>}
+        {!loading && !error && (
+          <>
+            <p className="directory-count">
+              {filteredEmployees.length} {translations.people.peopleCount}
+            </p>
+            <section className="people-grid" aria-label={translations.people.title}>
+              {filteredEmployees.map((employee) => (
+                <Link
+                  className="person-card"
+                  href={`/people/${employee.id}`}
+                  key={employee.id}
+                >
+                  <span className="avatar large">
+                    {initials(employee.membership.user.name)}
+                  </span>
+                  <span className="person-card-copy">
+                    <strong>{employee.membership.user.name}</strong>
+                    <span>{employee.jobTitle ?? ""}</span>
+                    <small>
+                      {employee.teamMembers
+                        .map((member) => member.team.name)
+                        .join(", ")}
+                    </small>
+                  </span>
+                  <span className={`status-pill ${employee.status}`}>
+                    {employee.status === "active"
+                      ? translations.people.active
+                      : translations.people.inactive}
+                  </span>
+                </Link>
+              ))}
+              {filteredEmployees.length === 0 && (
+                <p className="empty-state">{translations.people.noResults}</p>
+              )}
+            </section>
+          </>
+        )}
       </div>
     </AppShell>
   );
+}
+
+function initials(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("");
 }

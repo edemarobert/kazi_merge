@@ -1,0 +1,135 @@
+import {
+  notificationChannels,
+  notificationDeliveryStatuses,
+  type NotificationChannel,
+  type NotificationDeliveryRecord,
+  type NotificationEvent,
+} from "./contracts.js";
+
+export type NotificationPreferenceRecord = {
+  whatsappEnabled: boolean;
+  smsEnabled: boolean;
+  emailEnabled: boolean;
+  digestTime: string | null;
+};
+
+type DeliveryStore = {
+  notification: {
+    create(args: { data: Record<string, unknown> }): Promise<unknown>;
+    update(args: {
+      where: { id: string };
+      data: Record<string, unknown>;
+    }): Promise<unknown>;
+  };
+  preference: {
+    findUnique(args: {
+      where: { companyId_userId: { companyId: string; userId: string } };
+    }): Promise<NotificationPreferenceRecord | null>;
+  };
+};
+
+export type ChannelAdapter = {
+  send(record: NotificationDeliveryRecord): Promise<{
+    status: "sent" | "delivered";
+    sentAt?: Date;
+  }>;
+};
+
+export type NotificationAdapters = Partial<Record<NotificationChannel, ChannelAdapter>>;
+
+function externalChannelOrder(
+  preferences: NotificationPreferenceRecord,
+): NotificationChannel[] {
+  const channels: NotificationChannel[] = [];
+  if (preferences.whatsappEnabled) channels.push(notificationChannels.whatsapp);
+  if (preferences.smsEnabled) channels.push(notificationChannels.sms);
+  if (preferences.emailEnabled) channels.push(notificationChannels.email);
+  return channels;
+}
+
+export function createNotificationService(
+  store: DeliveryStore,
+  adapters: NotificationAdapters,
+) {
+  return {
+    async publish(event: NotificationEvent): Promise<NotificationDeliveryRecord[]> {
+      const preferences = (await store.preference.findUnique({
+        where: {
+          companyId_userId: {
+            companyId: event.companyId,
+            userId: event.recipientUserId,
+          },
+        },
+      })) ?? {
+        whatsappEnabled: false,
+        smsEnabled: true,
+        emailEnabled: true,
+        digestTime: null,
+      };
+
+      const records: NotificationDeliveryRecord[] = [];
+      const channels = [
+        notificationChannels.inApp,
+        ...externalChannelOrder(preferences),
+      ];
+      let externalDelivered = false;
+      for (const channel of channels) {
+        if (channel !== notificationChannels.inApp && externalDelivered) break;
+        const record: NotificationDeliveryRecord = {
+          eventId: event.eventId,
+          companyId: event.companyId,
+          recipientUserId: event.recipientUserId,
+          type: event.type,
+          taskId: event.taskId,
+          channel,
+          template: event.type,
+          status: notificationDeliveryStatuses.queued,
+        };
+        const created = (await store.notification.create({
+          data: {
+            companyId: record.companyId,
+            recipientUserId: record.recipientUserId,
+            type: record.type,
+            taskId: record.taskId,
+            channel: record.channel,
+            template: record.template,
+            status: record.status,
+          },
+        })) as { id: string };
+        const adapter = adapters[channel];
+        if (!adapter) {
+          records.push(record);
+          continue;
+        }
+        try {
+          const result = await adapter.send(record);
+          await store.notification.update({
+            where: { id: created.id },
+            data: {
+              status: result.status,
+              sentAt: result.sentAt ?? new Date(),
+              error: null,
+            },
+          });
+          record.status = result.status;
+          record.sentAt = result.sentAt ?? new Date();
+          records.push(record);
+          if (channel !== notificationChannels.inApp) externalDelivered = true;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Delivery failed.";
+          await store.notification.update({
+            where: { id: created.id },
+            data: {
+              status: notificationDeliveryStatuses.failed,
+              error: message,
+            },
+          });
+          record.status = notificationDeliveryStatuses.failed;
+          record.error = message;
+          records.push(record);
+        }
+      }
+      return records;
+    },
+  };
+}
