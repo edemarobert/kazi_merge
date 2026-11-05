@@ -199,6 +199,9 @@ export function createPeopleRouter() {
         inviteId: result.inviteId,
         token: result.token,
         expiresAt: result.expiresAt.toISOString(),
+        whatsappJoinLink: process.env.WHATSAPP_BUSINESS_NUMBER
+          ? `https://wa.me/${process.env.WHATSAPP_BUSINESS_NUMBER.replace(/[^0-9]/g, "")}?text=JOIN%20${encodeURIComponent(result.token)}`
+          : null,
       });
     } catch (error) {
       next(error);

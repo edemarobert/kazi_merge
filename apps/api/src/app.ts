@@ -12,9 +12,11 @@ import { createPeopleRouter } from "./people/routes.js";
 import { createDashboardRouter } from "./dashboard/routes.js";
 import { createTasksRouter } from "./tasks/routes.js";
 import { createNotificationsRouter } from "./notifications/routes.js";
+import { createWhatsAppRouter } from "./whatsapp/routes.js";
 
 export function createApp() {
   const app = express();
+  type RawBodyRequest = express.Request & { rawBody?: Buffer };
   const authRateLimit = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 50,
@@ -37,11 +39,18 @@ export function createApp() {
     },
   });
 
-  app.use(express.json());
+  app.use(
+    express.json({
+      verify: (request, _response, buffer) => {
+        (request as RawBodyRequest).rawBody = Buffer.from(buffer);
+      },
+    }),
+  );
   app.use(cookieParser());
   app.get("/api/v1/auth/csrf-token", (request, response) => {
     response.json({ token: csrf.generateCsrfToken(request, response) });
   });
+  app.use("/api/v1/integrations/whatsapp", createWhatsAppRouter());
   app.use("/api/v1/auth", authRateLimit, csrf.doubleCsrfProtection);
   app.use(
     "/api/v1/auth",

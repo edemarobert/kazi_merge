@@ -28,10 +28,27 @@ type DeliveryStore = {
   };
 };
 
+export type Recipient = { phoneE164?: string; email?: string };
+export type OutboundMessage = NotificationDeliveryRecord;
+export type DeliveryResult = {
+  status: "sent" | "delivered";
+  sentAt?: Date;
+  providerMessageId?: string;
+};
+
+export interface MessagingChannel {
+  send(to: Recipient, message: OutboundMessage): Promise<DeliveryResult>;
+}
+
+export interface InboundHandler<TRequest = unknown, TEvent = unknown> {
+  verify(request: TRequest): boolean;
+  parse(request: TRequest): TEvent[];
+}
 export type ChannelAdapter = {
   send(record: NotificationDeliveryRecord): Promise<{
     status: "sent" | "delivered";
     sentAt?: Date;
+    providerMessageId?: string;
   }>;
 };
 
@@ -84,6 +101,7 @@ export function createNotificationService(
           channel,
           template: event.type,
           status: notificationDeliveryStatuses.queued,
+          payload: event.payload,
         };
         const created = (await store.notification.create({
           data: {
@@ -108,12 +126,17 @@ export function createNotificationService(
             data: {
               status: result.status,
               sentAt: result.sentAt ?? new Date(),
+              ...(result.providerMessageId
+                ? { providerMessageId: result.providerMessageId }
+                : {}),
               error: null,
             },
           });
           record.status = result.status;
           record.sentAt = result.sentAt ?? new Date();
           records.push(record);
+          if (result.providerMessageId)
+            record.providerMessageId = result.providerMessageId;
           if (channel !== notificationChannels.inApp) externalDelivered = true;
         } catch (error) {
           const message = error instanceof Error ? error.message : "Delivery failed.";

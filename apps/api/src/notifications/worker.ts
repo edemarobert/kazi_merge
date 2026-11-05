@@ -1,13 +1,14 @@
 import { companyId, runWithCompanyContextAsync } from "../context/company-context.js";
-import type { NotificationEvent } from "./contracts.js";
+import { prisma } from "../db/prisma.js";
+import type { NotificationDeliveryRecord, NotificationEvent } from "./contracts.js";
+import { createInAppChannel, createJsonWebhookChannel } from "./channels.js";
 import { createNotificationWorker } from "./queue.js";
 import type { NotificationQueue } from "./queue.js";
 import {
-  createNotificationService,
-  type createNotificationService as NotificationServiceFactory,
-} from "./service.js";
-import { createInAppChannel } from "./channels.js";
-import { prisma } from "../db/prisma.js";
+  createGraphWhatsAppTransport,
+  createWhatsAppChannel,
+} from "../whatsapp/channel.js";
+import { createNotificationService } from "./service.js";
 
 export function createTenantNotificationWorker(
   redisUrl: string,
@@ -28,6 +29,70 @@ export function enqueueNotificationEvent(
 }
 
 export function createPrismaNotificationService() {
+  const adapters: Record<
+    string,
+    { send(record: NotificationDeliveryRecord): Promise<unknown> }
+  > = {
+    in_app: createInAppChannel(),
+  };
+  if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
+    const transport = createGraphWhatsAppTransport({
+      accessToken: process.env.WHATSAPP_ACCESS_TOKEN,
+      phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID,
+    });
+    adapters.whatsapp = {
+      send: async (record) => {
+        const account = await prisma.integrationAccount.findFirst({
+          where: {
+            userId: record.recipientUserId,
+            provider: "whatsapp",
+            status: "opted_in",
+          },
+          select: { externalId: true },
+        });
+        if (!account) throw new Error("Recipient has not opted in to WhatsApp.");
+        return createWhatsAppChannel(account.externalId, transport).send(record);
+      },
+    };
+  } else {
+    adapters.whatsapp = {
+      send: async () => {
+        throw new Error("WhatsApp provider is not configured.");
+      },
+    };
+  }
+  const resolveUserContact =
+    (field: "phoneE164" | "email") => async (record: NotificationDeliveryRecord) => {
+      const user = await prisma.user.findUnique({
+        where: { id: record.recipientUserId },
+        select: { phoneE164: true, email: true },
+      });
+      return user?.[field] ?? null;
+    };
+  adapters.sms = process.env.SMS_PROVIDER_URL
+    ? createJsonWebhookChannel({
+        channel: "sms",
+        url: process.env.SMS_PROVIDER_URL,
+        token: process.env.SMS_PROVIDER_TOKEN,
+        resolveRecipient: resolveUserContact("phoneE164"),
+      })
+    : {
+        send: async () => {
+          throw new Error("SMS provider is not configured.");
+        },
+      };
+  adapters.email = process.env.EMAIL_PROVIDER_URL
+    ? createJsonWebhookChannel({
+        channel: "email",
+        url: process.env.EMAIL_PROVIDER_URL,
+        token: process.env.EMAIL_PROVIDER_TOKEN,
+        resolveRecipient: resolveUserContact("email"),
+      })
+    : {
+        send: async () => {
+          throw new Error("Email provider is not configured.");
+        },
+      };
   return createNotificationService(
     {
       notification: {
@@ -39,6 +104,6 @@ export function createPrismaNotificationService() {
           prisma.notificationPreference.findUnique({ where: args.where }),
       },
     },
-    { in_app: createInAppChannel() },
+    adapters as never,
   );
 }

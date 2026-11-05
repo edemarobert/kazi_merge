@@ -138,17 +138,17 @@
 
 ### Milestone 5 — WhatsApp
 
-- [ ] Configure WhatsApp Cloud API adapter contracts.
-- [ ] Implement signed webhook verification and fast acknowledgement.
-- [ ] Deduplicate inbound message IDs.
-- [ ] Implement invite-link opt-in and JOIN handling.
-- [ ] Add the five approved notification templates.
-- [ ] Handle Done, In progress, and Blocked button replies.
-- [ ] Handle inbound note replies in task threads.
-- [ ] Add WhatsApp delivery fallback to SMS or email.
-- [ ] Add STOP opt-out and preference updates.
-- [ ] Verify the WhatsApp M7 acceptance criteria.
-
+- [x] Configure WhatsApp Cloud API adapter contracts.
+- [x] Implement signed webhook verification and fast acknowledgement.
+- [x] Deduplicate inbound message IDs.
+- [x] Implement invite-link opt-in and JOIN handling.
+- [x] Add the five approved notification templates.
+- [x] Handle Done, In progress, and Blocked button replies.
+- [x] Handle inbound note replies in task threads.
+- [x] Add WhatsApp delivery fallback to SMS or email.
+- [x] Add STOP opt-out and preference updates.
+- [x] Verify the WhatsApp M7 acceptance criteria.
+- **Milestone 5 status:** Complete in automated validation. The Cloud API transport sends approved template payloads with quick-reply buttons, inbound webhook events are signed, acknowledged quickly, deduplicated, and mapped to scoped task updates, and failed or unavailable WhatsApp delivery falls through configured SMS/email adapters with recorded delivery failures.
 ### Milestone 6 — Google extras
 
 - [ ] Add incremental Calendar authorization.

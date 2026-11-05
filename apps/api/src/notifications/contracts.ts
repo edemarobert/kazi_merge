@@ -58,7 +58,9 @@ export type NotificationDeliveryRecord = {
   taskId?: string;
   channel: NotificationChannel;
   template: NotificationTemplate;
+  payload?: Record<string, unknown>;
   status: NotificationDeliveryStatus;
   error?: string;
+  providerMessageId?: string;
   sentAt?: Date;
 };

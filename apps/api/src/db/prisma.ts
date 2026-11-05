@@ -15,6 +15,7 @@ const companyModels = new Set([
   "IntegrationAccount",
   "ActivityLog",
   "Invite",
+  "WhatsAppInboundMessage",
 ]);
 
 type QueryArgs = {
