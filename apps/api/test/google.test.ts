@@ -6,6 +6,7 @@ import {
   googleCalendarScope,
   googleDriveScope,
   googleScopesText,
+  readGoogleConfig,
   readGoogleState,
   revokeGoogleToken,
   verifyGoogleState,
@@ -135,5 +136,17 @@ test("Drive access token refresh returns only a short-lived access token", async
   assert.equal(
     await client.refreshAccessToken("drive-refresh-token"),
     "drive-access-token",
+  );
+});
+
+test("Google integrations are disabled when required configuration is absent", () => {
+  assert.equal(readGoogleConfig({}), null);
+  assert.equal(
+    readGoogleConfig({
+      GOOGLE_CLIENT_ID: "client-id",
+      GOOGLE_CLIENT_SECRET: "client-secret",
+      GOOGLE_REDIRECT_URI: "http://localhost:4000/callback",
+    }),
+    null,
   );
 });

@@ -169,7 +169,7 @@
 - [x] Store Drive file metadata and links only.
 - [x] Implement Google Sheets import.
 - [x] Reuse CSV preview and per-row validation for Sheets.
-- [ ] Test integration-disabled behavior and narrow scopes.
+- [x] Test integration-disabled behavior and narrow scopes.
 - [ ] Verify M8 acceptance criteria.
 
 ### Milestone 7 — Hardening and pilot
