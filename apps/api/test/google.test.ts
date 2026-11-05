@@ -3,7 +3,10 @@ import { test } from "node:test";
 import {
   createGoogleOAuthClient,
   createGoogleState,
+  googleCalendarScope,
   googleScopesText,
+  readGoogleState,
+  revokeGoogleToken,
   verifyGoogleState,
 } from "../src/auth/google.js";
 
@@ -58,4 +61,47 @@ test("Google identity exchange validates the audience and email verification", a
     name: "Owner",
     avatarUrl: undefined,
   });
+});
+
+test("Calendar authorization is incremental and requests only the Calendar scope", () => {
+  const state = createGoogleState(config.stateSecret, 1_000, "calendar");
+  const url = new URL(
+    createGoogleOAuthClient({
+      ...config,
+      calendarRedirectUri:
+        "http://localhost:4000/api/v1/integrations/google/calendar/callback",
+    }).authorizationUrl(state, [googleCalendarScope], "consent", true),
+  );
+
+  assert.equal(url.searchParams.get("scope"), googleCalendarScope);
+  assert.equal(url.searchParams.get("include_granted_scopes"), "true");
+  assert.equal(url.searchParams.get("prompt"), "consent");
+  assert.equal(readGoogleState(state, config.stateSecret, 1_001)?.purpose, "calendar");
+  assert.equal(readGoogleState(state, config.stateSecret, 601_001), null);
+});
+
+test("Calendar token exchange does not require a second identity token", async () => {
+  const client = createGoogleOAuthClient(
+    config,
+    async () =>
+      ({
+        ok: true,
+        json: async () => ({ refresh_token: "calendar-refresh-token" }),
+      }) as Response,
+  );
+
+  assert.deepEqual(await client.exchangeCalendarCode("calendar-code"), {
+    refreshToken: "calendar-refresh-token",
+  });
+});
+
+test("Google disconnect revokes the stored token", async () => {
+  let request: RequestInit | undefined;
+  await revokeGoogleToken("refresh-token", async (_url, init) => {
+    request = init;
+    return { ok: true } as Response;
+  });
+
+  assert.equal(request?.method, "POST");
+  assert.equal((request?.body as URLSearchParams).get("token"), "refresh-token");
 });

@@ -3,6 +3,7 @@ import { Router } from "express";
 import { getActorUserId, requireCompanyId } from "../context/company-context.js";
 import { prisma } from "../db/prisma.js";
 import { createBullMqNotificationQueue } from "../notifications/queue.js";
+import { createCalendarSyncQueue } from "../integrations/google-calendar-queue.js";
 import { taskAssignedEvent } from "../notifications/jobs.js";
 import { requirePolicy } from "../policy/policy.js";
 import { PolicyDeniedError } from "../policy/policy.js";
@@ -88,6 +89,9 @@ async function writeActivity(
 export function createTasksRouter() {
   const notificationQueue = process.env.REDIS_URL
     ? createBullMqNotificationQueue(process.env.REDIS_URL)
+    : null;
+  const calendarSyncQueue = process.env.REDIS_URL
+    ? createCalendarSyncQueue(process.env.REDIS_URL)
     : null;
   const router = Router();
 
@@ -210,6 +214,13 @@ export function createTasksRouter() {
             taskId: task.id,
             payload: { title: task.title, dueAt: task.dueAt },
           }),
+        });
+      }
+      if (calendarSyncQueue && task.dueAt) {
+        await calendarSyncQueue.enqueue({
+          companyId: requireCompanyId(),
+          taskId: task.id,
+          operation: "upsert",
         });
       }
       await writeActivity("task.created", task.id, {
@@ -369,6 +380,105 @@ export function createTasksRouter() {
     }
   });
 
+  router.delete("/:taskId", async (request, response, next) => {
+    try {
+      const taskId = Array.isArray(request.params.taskId)
+        ? request.params.taskId[0]
+        : request.params.taskId;
+      const task = await prisma.task.findFirst({
+        where: { id: taskId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!task) {
+        response
+          .status(404)
+          .json({ code: "task_not_found", message: "Task not found." });
+        return;
+      }
+      await requirePolicy("tasks.update", { targetTaskId: task.id });
+      await prisma.task.update({
+        where: { id_companyId: { id: task.id, companyId: requireCompanyId() } },
+        data: { deletedAt: new Date() },
+      });
+      await writeActivity("task.deleted", task.id, {});
+      if (calendarSyncQueue)
+        await calendarSyncQueue.enqueue({
+          companyId: requireCompanyId(),
+          taskId: task.id,
+          operation: "remove",
+        });
+      response.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+  router.patch("/:taskId", async (request, response, next) => {
+    try {
+      if (!Object.prototype.hasOwnProperty.call(request.body ?? {}, "dueAt")) {
+        response.status(400).json({
+          code: "invalid_task_update",
+          message: "dueAt is required.",
+        });
+        return;
+      }
+
+      const taskId = Array.isArray(request.params.taskId)
+        ? request.params.taskId[0]
+        : request.params.taskId;
+      const existing = await prisma.task.findFirst({
+        where: { id: taskId, deletedAt: null },
+        select: { id: true, dueAt: true },
+      });
+      if (!existing) {
+        response.status(404).json({
+          code: "task_not_found",
+          message: "Task not found.",
+        });
+        return;
+      }
+      await requirePolicy("tasks.update", { targetTaskId: existing.id });
+
+      const rawDueAt = request.body?.dueAt;
+      let dueAt: Date | null = null;
+      if (rawDueAt !== null) {
+        if (typeof rawDueAt !== "string" || !rawDueAt.trim()) {
+          response.status(400).json({
+            code: "invalid_due_date",
+            message: "dueAt must be a valid ISO date or null.",
+          });
+          return;
+        }
+        dueAt = new Date(rawDueAt);
+        if (Number.isNaN(dueAt.getTime())) {
+          response.status(400).json({
+            code: "invalid_due_date",
+            message: "dueAt must be a valid ISO date or null.",
+          });
+          return;
+        }
+      }
+
+      const task = await prisma.task.update({
+        where: { id_companyId: { id: existing.id, companyId: requireCompanyId() } },
+        data: { dueAt },
+        include: taskInclude,
+      });
+      await writeActivity("task.due_date_changed", task.id, {
+        before: existing.dueAt?.toISOString() ?? null,
+        after: dueAt?.toISOString() ?? null,
+      });
+      if (calendarSyncQueue) {
+        await calendarSyncQueue.enqueue({
+          companyId: requireCompanyId(),
+          taskId: task.id,
+          operation: dueAt ? "upsert" : "remove",
+        });
+      }
+      response.json({ task });
+    } catch (error) {
+      next(error);
+    }
+  });
   router.patch("/:taskId/status", async (request, response, next) => {
     try {
       const status = parseStatus(request.body?.status);
@@ -442,6 +552,13 @@ export function createTasksRouter() {
         to: normalized.status,
         blockedReason: normalized.blockedReason,
       });
+      if (calendarSyncQueue && normalized.status === TaskStatus.done) {
+        await calendarSyncQueue.enqueue({
+          companyId: requireCompanyId(),
+          taskId: task.id,
+          operation: "remove",
+        });
+      }
       response.json({ task, update });
     } catch (error) {
       next(error);

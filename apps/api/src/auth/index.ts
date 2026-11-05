@@ -1,8 +1,14 @@
 import { prisma } from "../db/prisma.js";
 import { companyId, runWithCompanyContextAsync } from "../context/company-context.js";
 import { createSessionService } from "./session.js";
-import type { GoogleIdentity } from "./google.js";
-import { encryptIntegrationToken } from "./token-crypto.js";
+import {
+  googleCalendarScope,
+  googleIdentityScopes,
+  revokeGoogleToken,
+  type GoogleCalendarToken,
+  type GoogleIdentity,
+} from "./google.js";
+import { decryptIntegrationToken, encryptIntegrationToken } from "./token-crypto.js";
 
 export const sessionService = createSessionService(prisma);
 
@@ -93,4 +99,85 @@ async function completeUserIdentity(userId: string) {
     companyId: membership.companyId,
     sessionToken: await sessionService.create(userId, membership.companyId),
   };
+}
+
+export async function completeGoogleCalendarAuthorization(
+  userId: string,
+  activeCompanyId: string,
+  token: GoogleCalendarToken,
+): Promise<void> {
+  await runWithCompanyContextAsync(
+    companyId(activeCompanyId),
+    async () => {
+      const account = await prisma.integrationAccount.findFirst({
+        where: {
+          companyId: activeCompanyId,
+          userId,
+          provider: "google",
+        },
+        select: { id: true, scopes: true },
+      });
+      if (!account) {
+        throw new Error("Connect Google sign-in before enabling Calendar.");
+      }
+
+      await prisma.integrationAccount.update({
+        where: {
+          id_companyId: { id: account.id, companyId: activeCompanyId },
+        },
+        data: {
+          ...(token.refreshToken
+            ? { encryptedToken: encryptIntegrationToken(token.refreshToken) }
+            : {}),
+          scopes: [...new Set([...account.scopes, googleCalendarScope])],
+          status: "active",
+        },
+      });
+    },
+    userId,
+  );
+}
+
+export async function disconnectGoogleCalendar(
+  userId: string,
+  activeCompanyId: string,
+  fetcher: typeof fetch = fetch,
+): Promise<void> {
+  await runWithCompanyContextAsync(
+    companyId(activeCompanyId),
+    async () => {
+      const account = await prisma.integrationAccount.findFirst({
+        where: {
+          companyId: activeCompanyId,
+          userId,
+          provider: "google",
+        },
+        select: { id: true, encryptedToken: true },
+      });
+      if (!account) return;
+
+      if (account.encryptedToken) {
+        try {
+          await revokeGoogleToken(
+            decryptIntegrationToken(account.encryptedToken),
+            fetcher,
+          );
+        } catch {
+          // Local removal is authoritative for stopping future synchronization.
+        }
+      }
+
+      await prisma.integrationAccount.update({
+        where: {
+          id_companyId: { id: account.id, companyId: activeCompanyId },
+        },
+        data: {
+          encryptedToken: null,
+          scopes: googleIdentityScopes,
+          status: "disconnected",
+        },
+      });
+    },
+    userId,
+  );
 }

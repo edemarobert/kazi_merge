@@ -99,8 +99,8 @@ model Company {
   integrationAccounts     IntegrationAccount[]
   whatsappInboundMessages WhatsAppInboundMessage[]
   activityLogs            ActivityLog[]
-  sessions                 Session[]
-  invites                  Invite[]
+  sessions                Session[]
+  invites                 Invite[]
 }
 
 model User {
@@ -118,19 +118,19 @@ model User {
   notificationPreferences NotificationPreference[]
   integrationAccounts     IntegrationAccount[]
   activityLogs            ActivityLog[]            @relation("ActivityActor")
-  sessions                 Session[]
-  sentInvites              Invite[]                @relation("InviteSender")
-  receivedInvites         Invite[]                @relation("InviteRecipient")
+  sessions                Session[]
+  sentInvites             Invite[]                 @relation("InviteSender")
+  receivedInvites         Invite[]                 @relation("InviteRecipient")
 }
 
 model Session {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
-  companyId  String   @map("company_id") @db.Uuid
-  tokenHash  String   @unique @map("token_hash")
-  expiresAt  DateTime @map("expires_at") @db.Timestamptz(3)
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  lastSeenAt DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  companyId  String    @map("company_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastSeenAt DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(3)
   revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(3)
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -142,15 +142,15 @@ model Session {
 }
 
 model Invite {
-  id            String           @id @default(uuid()) @db.Uuid
-  companyId     String           @map("company_id") @db.Uuid
-  inviterUserId String           @map("inviter_user_id") @db.Uuid
-  inviteeUserId String           @map("invitee_user_id") @db.Uuid
+  id            String         @id @default(uuid()) @db.Uuid
+  companyId     String         @map("company_id") @db.Uuid
+  inviterUserId String         @map("inviter_user_id") @db.Uuid
+  inviteeUserId String         @map("invitee_user_id") @db.Uuid
   role          MembershipRole
-  tokenHash     String           @unique @map("token_hash")
-  expiresAt     DateTime         @map("expires_at") @db.Timestamptz(3)
-  acceptedAt    DateTime?        @map("accepted_at") @db.Timestamptz(3)
-  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  tokenHash     String         @unique @map("token_hash")
+  expiresAt     DateTime       @map("expires_at") @db.Timestamptz(3)
+  acceptedAt    DateTime?      @map("accepted_at") @db.Timestamptz(3)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   inviter User    @relation("InviteSender", fields: [inviterUserId], references: [id], onDelete: Restrict)
@@ -271,22 +271,23 @@ model TeamMember {
 }
 
 model Task {
-  id                  String       @id @default(uuid()) @db.Uuid
-  companyId           String       @map("company_id") @db.Uuid
-  title               String
-  description         String?
-  assigneeEmployeeId  String       @map("assignee_employee_id") @db.Uuid
-  createdByEmployeeId String       @map("created_by_employee_id") @db.Uuid
-  teamId              String?      @map("team_id") @db.Uuid
-  priority            TaskPriority @default(medium)
-  status              TaskStatus   @default(todo)
-  dueAt               DateTime?    @map("due_at") @db.Timestamptz(3)
-  completedAt         DateTime?    @map("completed_at") @db.Timestamptz(3)
-  blockedReason       String?      @map("blocked_reason")
-  source              TaskSource   @default(app)
-  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt           DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt           DateTime?    @map("deleted_at") @db.Timestamptz(3)
+  id                    String       @id @default(uuid()) @db.Uuid
+  companyId             String       @map("company_id") @db.Uuid
+  title                 String
+  description           String?
+  assigneeEmployeeId    String       @map("assignee_employee_id") @db.Uuid
+  createdByEmployeeId   String       @map("created_by_employee_id") @db.Uuid
+  teamId                String?      @map("team_id") @db.Uuid
+  priority              TaskPriority @default(medium)
+  status                TaskStatus   @default(todo)
+  dueAt                 DateTime?    @map("due_at") @db.Timestamptz(3)
+  googleCalendarEventId String?      @map("google_calendar_event_id")
+  completedAt           DateTime?    @map("completed_at") @db.Timestamptz(3)
+  blockedReason         String?      @map("blocked_reason")
+  source                TaskSource   @default(app)
+  createdAt             DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt             DateTime?    @map("deleted_at") @db.Timestamptz(3)
 
   company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
   assignee      Employee       @relation("TaskAssignee", fields: [assigneeEmployeeId, companyId], references: [id, companyId], onDelete: Restrict)
@@ -345,19 +346,19 @@ model Attachment {
 }
 
 model Notification {
-  id              String             @id @default(uuid()) @db.Uuid
-  companyId       String             @map("company_id") @db.Uuid
-  recipientUserId String             @map("recipient_user_id") @db.Uuid
-  type            String
-  taskId          String?            @map("task_id") @db.Uuid
-  channel         String
-  template        String
-  status          NotificationStatus @default(queued)
-  error           String?
-  sentAt          DateTime?          @map("sent_at") @db.Timestamptz(3)
-  providerMessageId String?           @map("provider_message_id")
-  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id                String             @id @default(uuid()) @db.Uuid
+  companyId         String             @map("company_id") @db.Uuid
+  recipientUserId   String             @map("recipient_user_id") @db.Uuid
+  type              String
+  taskId            String?            @map("task_id") @db.Uuid
+  channel           String
+  template          String
+  status            NotificationStatus @default(queued)
+  error             String?
+  sentAt            DateTime?          @map("sent_at") @db.Timestamptz(3)
+  providerMessageId String?            @map("provider_message_id")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   recipient User    @relation("NotificationRecipient", fields: [recipientUserId], references: [id], onDelete: Restrict)

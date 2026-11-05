@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { companyId, runWithCompanyContextAsync } from "../context/company-context.js";
 import { prisma } from "../db/prisma.js";
 import { createBullMqNotificationQueue } from "../notifications/queue.js";
+import { createCalendarSyncQueue } from "../integrations/google-calendar-queue.js";
 import { createBullMqWhatsAppInboundQueue } from "./queue.js";
 import { taskCommentEvent } from "../notifications/jobs.js";
 import {
@@ -283,6 +284,14 @@ async function handleTaskAction(
         },
       },
     });
+    if (status === "done" && process.env.REDIS_URL) {
+      const calendarQueue = createCalendarSyncQueue(process.env.REDIS_URL);
+      await calendarQueue.enqueue({
+        companyId: identity.companyId,
+        taskId: updated.id,
+        operation: "remove",
+      });
+    }
     if (status === "done" && process.env.REDIS_URL) {
       const queue = createBullMqNotificationQueue(process.env.REDIS_URL);
       await queue.enqueue({

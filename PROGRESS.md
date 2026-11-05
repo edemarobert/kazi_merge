@@ -149,11 +149,21 @@
 - [x] Add STOP opt-out and preference updates.
 - [x] Verify the WhatsApp M7 acceptance criteria.
 - **Milestone 5 status:** Complete in automated validation. The Cloud API transport sends approved template payloads with quick-reply buttons, inbound webhook events are signed, acknowledged quickly, deduplicated, and mapped to scoped task updates, and failed or unavailable WhatsApp delivery falls through configured SMS/email adapters with recorded delivery failures.
+
 ### Milestone 6 — Google extras
 
-- [ ] Add incremental Calendar authorization.
-- [ ] Implement one-way task due-date Calendar sync.
-- [ ] Update and remove Calendar events on task changes.
+- **Task 1 status:** Complete. Added authenticated incremental Calendar authorization with signed purpose-specific state and the narrow Calendar scope.
+- **Task 1 validation:** API typecheck, formatting, and focused Google tests pass; live OAuth remains untested without provider credentials.
+- **Task 2 status:** Complete. Due-dated task creation enqueues a tenant-scoped BullMQ job that creates and stores the assignee's Google Calendar event.
+- **Task 2 validation:** Prisma validation, API typecheck, build, formatting, and focused Calendar tests pass; full API execution remains blocked by the local database migration/schema mismatch.
+- **Task 3 status:** Complete. Due-date changes enqueue Calendar upsert/removal jobs; completion, WhatsApp completion, and soft deletion enqueue removal jobs. The worker patches/deletes events off-thread and clears stored event IDs after removal.
+- **Task 3 validation:** API typecheck, build, Prisma validation, formatting, diff checks, and focused Calendar tests pass.
+- **Task 4 status:** Complete. Authenticated Google Calendar disconnect is scoped to the active user and company. It revokes the token when possible, always clears the encrypted token, removes Calendar scope, and marks the account disconnected without breaking Google identity sign-in.
+- **Task 4 validation:** API typecheck, formatting, diff checks, and focused Google/Calendar tests (8/8) pass. Remote revocation and database-backed route behavior remain untested locally due unavailable provider credentials and the local database migration.
+
+- [x] Add incremental Calendar authorization.
+- [x] Implement one-way task due-date Calendar sync.
+- [x] Update and remove Calendar events on task changes.
 - [ ] Implement secure Google disconnect and token removal.
 - [ ] Integrate the narrow-scope Google Drive Picker.
 - [ ] Store Drive file metadata and links only.

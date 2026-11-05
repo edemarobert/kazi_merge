@@ -5,8 +5,14 @@ import { doubleCsrf } from "csrf-csrf";
 import { errorHandler } from "./middleware/error-handler.js";
 import { authContextMiddleware } from "./middleware/auth-context.js";
 import { createGoogleAuthRouter } from "./auth/google-routes.js";
+import { createGoogleCalendarRouter } from "./auth/google-calendar-routes.js";
 import { createPasswordlessAuthRouter } from "./auth/passwordless-routes.js";
-import { completeGoogleIdentity, completePasswordlessIdentity } from "./auth/index.js";
+import {
+  completeGoogleCalendarAuthorization,
+  disconnectGoogleCalendar,
+  completeGoogleIdentity,
+  completePasswordlessIdentity,
+} from "./auth/index.js";
 import { createCompanyRouter } from "./companies/routes.js";
 import { createPeopleRouter } from "./people/routes.js";
 import { createDashboardRouter } from "./dashboard/routes.js";
@@ -63,6 +69,15 @@ export function createApp() {
     }),
   );
   app.use(authContextMiddleware);
+  app.use(
+    "/api/v1/integrations/google",
+    createGoogleCalendarRouter({
+      onAuthorization: ({ userId, companyId, refreshToken }) =>
+        completeGoogleCalendarAuthorization(userId, companyId, { refreshToken }),
+      onDisconnect: ({ userId, companyId }) =>
+        disconnectGoogleCalendar(userId, companyId),
+    }),
+  );
   app.use("/api/v1/companies", createCompanyRouter());
   app.use("/api/v1/people", createPeopleRouter());
   app.use("/api/v1/dashboard", createDashboardRouter());
