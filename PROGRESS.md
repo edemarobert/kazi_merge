@@ -168,7 +168,7 @@
 - [x] Integrate the narrow-scope Google Drive Picker.
 - [x] Store Drive file metadata and links only.
 - [x] Implement Google Sheets import.
-- [ ] Reuse CSV preview and per-row validation for Sheets.
+- [x] Reuse CSV preview and per-row validation for Sheets.
 - [ ] Test integration-disabled behavior and narrow scopes.
 - [ ] Verify M8 acceptance criteria.
 
